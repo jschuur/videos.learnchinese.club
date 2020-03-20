@@ -1,0 +1,27 @@
+{
+  "name": "chinese-channels",
+  "version": "1.0.0",
+  "description": "Lists recent YouTube videos for Chinese language learning",
+  "main": "src/fetch.js",
+  "scripts": {
+    "build": "parcel build src/fetch.js --target node",
+    "fetch": "babel-node src/fetch.js",
+    "generate:json": "csvtojson --delimiter=auto channels.csv > channels.json"
+  },
+  "keywords": [],
+  "author": "Joost Schuur <jschuur@jschuur.com>",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.642.0",
+    "dotenv": "^8.2.0",
+    "google-spreadsheet": "^3.0.10",
+    "rss-parser": "^3.7.6",
+    "single-line-log": "^1.1.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.7",
+    "@babel/node": "^7.8.7",
+    "@babel/preset-env": "^7.8.7",
+    "parcel": "^1.12.4"
+  }
+}
