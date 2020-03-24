@@ -1,4 +1,3 @@
-require('dotenv').config();
 const Parser = require('rss-parser');
 const mongoose = require('mongoose');
 const AWS = require('aws-sdk');
@@ -19,6 +18,8 @@ const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_ID,
   secretAccessKey: process.env.AWS_SECRET_KEY
 });
+
+const mode = process.env.NODE_ENV || 'development';
 
 const feedURL = (channel_id) => `https://www.youtube.com/feeds/videos.xml?channel_id=${channel_id}`;
 
@@ -72,10 +73,15 @@ async function loadVideos(channels) {
 }
 
 async function saveVideosToDB(videos) {
-  await mongoose.connect(process.env.MONGO_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  });
+  try {
+    await mongoose.connect(process.env.MONGODB_URL, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+  } catch (err) {
+    console.error(`Couldn't connect to database: ${err.message}`);
+    return;
+  }
 
   try {
     let response = await Video.bulkWrite(videos.map(video => ({
@@ -116,6 +122,8 @@ async function writeVideoJSON(data) {
 }
 
 (async () => {
+  console.log(`Mode: ${mode}`);
+
   let channels = await loadChannels();
   let videos = await loadVideos(channels);
   let results = await writeVideoJSON(JSON.stringify(videos));

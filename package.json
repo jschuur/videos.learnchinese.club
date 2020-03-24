@@ -1,12 +1,12 @@
 {
-  "name": "chinese-channels",
-  "version": "1.0.0",
+  "name": "videos.learnchinese.club",
+  "version": "0.0.1",
   "description": "Lists recent YouTube videos for Chinese language learning",
   "main": "src/fetch.js",
   "scripts": {
     "build": "parcel build src/fetch.js --target node",
-    "fetch": "babel-node src/fetch.js",
-    "generate:json": "csvtojson --delimiter=auto channels.csv > channels.json"
+    "fetch": "babel-node -r dotenv/config src/fetch.js dotenv_config_path=.env.development",
+    "fetch:prod": "NODE_ENV=production babel-node -r dotenv/config src/fetch.js"
   },
   "keywords": [],
   "author": "Joost Schuur <jschuur@jschuur.com>",
