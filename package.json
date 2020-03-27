@@ -4,9 +4,10 @@
   "description": "Lists recent YouTube videos for Chinese language learning",
   "main": "src/fetch.js",
   "scripts": {
-    "build": "parcel build src/fetch.js --target node",
-    "fetch": "babel-node -r dotenv/config src/fetch.js dotenv_config_path=.env.development",
-    "fetch:prod": "NODE_ENV=production babel-node -r dotenv/config src/fetch.js"
+    "build": "parcel build src/update.js --target node",
+    "update": "babel-node -r dotenv/config src/update.js dotenv_config_path=.env.development",
+    "update:prod": "NODE_ENV=production babel-node -r dotenv/config src/fetch.js",
+    "update:all": "npm run update; npm run update:prod",
   },
   "keywords": [],
   "author": "Joost Schuur <jschuur@jschuur.com>",
@@ -16,6 +17,7 @@
     "dotenv": "^8.2.0",
     "ellipsize": "^0.1.0",
     "google-spreadsheet": "^3.0.10",
+    "googleapis": "^48.0.0",
     "mongoose": "^5.9.5",
     "pretty-bytes": "^5.3.0",
     "rss-parser": "^3.7.6",
@@ -25,6 +27,8 @@
     "@babel/core": "^7.8.7",
     "@babel/node": "^7.8.7",
     "@babel/preset-env": "^7.8.7",
+    "babel-plugin-module-resolver": "^4.0.0",
+    "eslint": "^6.8.0",
     "parcel": "^1.12.4"
   }
 }

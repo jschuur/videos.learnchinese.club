@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
-module.exports = mongoose.model('Video', new Schema({
+export default mongoose.model('Video', new Schema({
   _id: String,
   title: String,
   link: String,

@@ -1,12 +1,12 @@
-const Parser = require('rss-parser');
-const mongoose = require('mongoose');
-const AWS = require('aws-sdk');
-const { GoogleSpreadsheet } = require('google-spreadsheet');
-const log = require('single-line-log').stdout;
-const ellipsize = require('ellipsize');
-const prettyBytes = require('pretty-bytes');
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import ellipsize from 'ellipsize';
+import prettyBytes from 'pretty-bytes';
+import AWS from 'aws-sdk';
+import Parser from 'rss-parser';
+import { stdout as log } from 'single-line-log';
 
-const Video = require('./Video.js');
+import 'db';
+import Video from 'models/Video';
 
 const parser = new Parser({
   customFields: {
@@ -19,12 +19,9 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.AWS_SECRET_KEY
 });
 
-const mode = process.env.NODE_ENV || 'development';
-
 const feedURL = (channel_id) => `https://www.youtube.com/feeds/videos.xml?channel_id=${channel_id}`;
 
-// Get the channel list from the Google Sheets doc
-async function loadChannels() {
+export async function getChannelsFromGoogleSheet() {
   console.log('Downloading channel list from Google Drive');
   const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID);
   doc.useApiKey(process.env.GOOGLE_API_KEY);
@@ -39,7 +36,7 @@ async function loadChannels() {
 }
 
 // Grab recent videos via their RSS feed
-async function loadVideos(channels) {
+export async function getLatestVideos(channels) {
   var videos = [];
 
   for(let channel of channels) {
@@ -72,17 +69,7 @@ async function loadVideos(channels) {
   return videos.sort((a, b) => -a.published_at.localeCompare(b.published_at));
 }
 
-async function saveVideosToDB(videos) {
-  try {
-    await mongoose.connect(process.env.MONGODB_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-  } catch (err) {
-    console.error(`Couldn't connect to database: ${err.message}`);
-    return;
-  }
-
+export async function saveVideosToDB(videos) {
   try {
     let response = await Video.bulkWrite(videos.map(video => ({
       updateOne: {
@@ -96,11 +83,9 @@ async function saveVideosToDB(videos) {
   } catch (err) {
     console.error(`Couldn't write to the database: ${err.message}`);
   }
-
-  mongoose.disconnect();
 }
 
-async function writeVideoJSON(data) {
+export async function writeVideoJSON(data) {
   try {
     const params = {
       Bucket: process.env.AWS_BUCKET,
@@ -120,12 +105,3 @@ async function writeVideoJSON(data) {
     return err;
   }
 }
-
-(async () => {
-  console.log(`Mode: ${mode}`);
-
-  let channels = await loadChannels();
-  let videos = await loadVideos(channels);
-  let results = await writeVideoJSON(JSON.stringify(videos));
-  await saveVideosToDB(videos);
-})();
