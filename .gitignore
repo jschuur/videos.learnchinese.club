@@ -1,4 +1,9 @@
 node_modules
-dist
+.serverless
+.webpack
+client/dist
+client/node_modules
+client/.cache
 .env*
+client/src/.env*
 test.js

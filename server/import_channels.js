@@ -85,30 +85,7 @@ async function updateChannelInfo() {
     return
   }
 
-
   return;
-  try {
-    let response = await Channel.bulkWrite(channels.map(({ id, homepage, twitter, instagram})  => ({
-      updateOne: {
-        filter: { _id: id },
-        update: { 
-          _id: id, 
-          ...(homepage && { homepage }),
-          ...(twitter && { twitter }),
-          ...(instagram && { instagram })
-        },
-        upsert: true
-      }
-    })));
-
-    console.log(`Saving new channels to database (${response.upsertedCount} added)`);
-  } catch (err) {
-    console.error(`Couldn't write new channel data to the database: ${err.message}`);
-
-    return
-  }
-
-  console.log(res.data);
 }
 
 (async () => {

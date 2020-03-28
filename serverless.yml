@@ -1,0 +1,55 @@
+service: videos-learnchinese-club
+
+plugins:
+  - serverless-bundle
+  - serverless-dotenv-plugin
+  - serverless-offline
+  - serverless-finch
+  - serverless-domain-manager
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  serverless-offline:
+    useChildProcesses: true
+  client:
+    bucketName: club.learnchinese.videos
+  domains:
+    prod: data.learnchinese.club
+    stage: data-stage.learnchinese.club
+    dev: data-dev.learnchinese.club
+  domain: ${self:custom.domains.${self:custom.stage}}
+  customDomain:
+    domainName: ${self:custom.domains.${self:custom.stage}}
+    basePath: 'v1'
+    stage: ${self:custom.stage}
+    certificateName: '*.learnchinese.club'
+    createRoute53Record: true
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+functions:
+  videos:
+    handler: server/api/videos.handler
+    events:
+      - http:
+          path: videos
+          method: get
+          cors: true
+
+  status:
+    handler: server/api/status.handler
+    events:
+      - http:
+          path: status
+          method: get
+
+  update:
+    handler: server/update.handler
+    timeout: 60
+    events:
+      - schedule: rate(30 minutes)
+      - http:
+          path: update
+          method: get
