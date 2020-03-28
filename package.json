@@ -8,6 +8,8 @@
     "update": "babel-node -r dotenv/config src/update.js dotenv_config_path=.env.development",
     "update:prod": "NODE_ENV=production babel-node -r dotenv/config src/fetch.js",
     "update:all": "npm run update; npm run update:prod",
+    "importchannels": "babel-node -r dotenv/config src/import_channels.js dotenv_config_path=.env.development",
+    "test": "babel-node -r dotenv/config test.js dotenv_config_path=.env.development"
   },
   "keywords": [],
   "author": "Joost Schuur <jschuur@jschuur.com>",

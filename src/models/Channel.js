@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 export default mongoose.model('Channel', new Schema({
   _id: String,
+  channel_id: String,
   title: String,
   description: String,
   customURL: String,
