@@ -36,6 +36,8 @@ export async function getChannelsFromGoogleSheet() {
 export async function getLatestVideosFromRSS(channels) {
   var videos = [];
 
+  console.log(`Looking at RSS feeds for ${channels.length} channels`);
+
   for(let channel of channels) {
     try {
       var feed = await parser.parseURL(feedURL(channel.channel_id));

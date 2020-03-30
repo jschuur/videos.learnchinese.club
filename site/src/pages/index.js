@@ -12,7 +12,7 @@ const Container = styled.div`
 `;
 
 export default ({data}) => {
-  const { nodes: videos } = data.allMongodbYoutubeVideos;
+  const { nodes: videos } = data.allMongodbChineseyoutubeVideos;
 
   return (
     <Container>
@@ -23,7 +23,7 @@ export default ({data}) => {
 
 export const query = graphql`
   query RecentVideosQuery {
-    allMongodbYoutubeVideos(
+    allMongodbChineseyoutubeVideos(
       limit: 60
       sort: {
         fields: [published_at]
