@@ -2,8 +2,6 @@ require("dotenv").config({
   path: `../.env.${process.env.NODE_ENV}`,
 });
 
-console.log(`Using ${process.env.MONGODB_HOST}`);
-
 // https://stackoverflow.com/questions/54089978/stuck-trying-to-fetch-data-from-mongodb-into-gatsby-using-gatsby-source-mongodb
 var mongoDBExtraParams = process.env.NODE_ENV == 'production' ?
   {
@@ -27,6 +25,12 @@ module.exports = {
         trackingId: '107202787-3',
         head: false
       },
+    },
+    {
+        resolve: `gatsby-plugin-s3`,
+        options: {
+            bucketName: 'club.learnchinese.videos'
+        },
     },
     {
       resolve: 'gatsby-source-mongodb',
