@@ -14,7 +14,9 @@ export async function handler(event, context) {
     statusCode: 200,
     body: JSON.stringify({
       videos: videoCount,
-      channels: channelCount
+      channels: channelCount,
+      event: event,
+      context: context
     })
   };
 };

@@ -1,21 +1,55 @@
 import mongoose from 'mongoose';
-import pluralize from 'pluralize';
 
-import { getChannelsFromGoogleSheet, getLatestVideos, saveVideosToDB } from './lib';
+import {
+  getChannels,
+  getLatestVideosFromRSS,
+  saveVideosToDB,
+  // getChannelsFromGoogleSheet,
+  // saveChannels,
+  updateChannelInfo
+} from './lib';
 import './db';
 
-export async function handler(event, context) {
+function buildResponse(statusCode, body) {
+  return {
+    statusCode,
+    body: JSON.stringify(body, null, 2)
+  };
+}
+
+export async function videos(event, context) {
   console.log(`Searching for updated videos...`);
 
-  let channels = await getChannelsFromGoogleSheet();
-  let videos = await getLatestVideos(channels);
-  let response = await saveVideosToDB(videos);
+  const channels = await getChannels();
+  const videos = await getLatestVideosFromRSS(channels);
+  const response = await saveVideosToDB(videos);
 
   mongoose.disconnect();
 
-  // TODO handle error case
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ status: `Update found ${pluralize('new video', response.upsertedCount, true)} in ${pluralize('channels', channels.length, true)}`})
-  };
+  // TODO error handling
+  return buildResponse(200, {
+    message: "Success",
+    channels: channels.length,
+    new_videos: response.upsertedCount
+  });
+};
+
+export async function channels(event, context) {
+  console.log(`Updating channel info...`);
+
+  // TODO: trigger spreadsheet update via flag
+  // var channels = await getChannelsFromGoogleSheet();
+  // await saveChannels(channels);
+
+  const channels = await getChannels();
+  const response = await updateChannelInfo(channels);
+
+  mongoose.disconnect();
+
+    // TODO: error handling
+  return buildResponse(200, {
+    status: 'Success',
+    channels: channels.length,
+    response
+  });
 };

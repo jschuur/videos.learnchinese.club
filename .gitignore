@@ -4,6 +4,8 @@ node_modules
 client/dist
 client/node_modules
 client/.cache
+site/.cache
 .env*
+!.env.sample
 client/src/.env*
 test.js

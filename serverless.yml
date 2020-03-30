@@ -12,6 +12,7 @@ custom:
   serverless-offline:
     useChildProcesses: true
   client:
+    distributionFolder: site/public
     bucketName: club.learnchinese.videos
   domains:
     prod: data.learnchinese.club
@@ -42,14 +43,23 @@ functions:
     handler: server/api/status.handler
     events:
       - http:
-          path: status
+          path: status/{type}
           method: get
 
-  update:
-    handler: server/update.handler
+  update_videos:
+    handler: server/update.videos
     timeout: 60
     events:
       - schedule: rate(30 minutes)
       - http:
-          path: update
+          path: update/videos
+          method: get
+
+  update_channels:
+    handler: server/update.channels
+    timeout: 60
+    events:
+      # - schedule: rate(6 hours)
+      - http:
+          path: update/channels
           method: get
