@@ -3,11 +3,11 @@
   "version": "0.0.2",
   "description": "Lists recent YouTube videos for Chinese language learning",
   "scripts": {
-    "dev:client": "npm run dev --prefix client",
+    "dev:site": "npm run develop --prefix site",
     "dev:server": "serverless offline --watch",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "build:client": "npm run build --prefix client",
-    "deploy:client": "npm run build:client && serverless client deploy --no-confirm && aws cloudfront create-invalidation --distribution-id=E1UJA65L7ZLH79 --paths /",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:site\"",
+    "build:site": "npm run build --prefix site",
+    "deploy:site": "npm run build:site && serverless client deploy --no-confirm && aws cloudfront create-invalidation --distribution-id=E1UJA65L7ZLH79 --paths /",
     "deploy:server": "serverless deploy --env production --stage prod",
     "update:videos": "serverless invoke local -f update_videos",
     "update:videos:prod": "serverless invoke local -f update_videos --env production",
@@ -16,6 +16,7 @@
     "update:channels:prod": "serverless invoke local -f update_channels --env production",
     "update:channels:both": "npm run update:channels && npm run update:channels:prod",
     "update:all": "npm run update:channels:both && npm run update:videos:both",
+    "util:archives": "babel-node -r dotenv/config util/archives.js dotenv_config_path=.env.development"
   },
   "keywords": [],
   "author": "Joost Schuur <jschuur@jschuur.com>",

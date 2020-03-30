@@ -1,11 +1,11 @@
 node_modules
 .serverless
 .webpack
-client/dist
-client/node_modules
-client/.cache
+site/node_modules
+site/public
 site/.cache
 .env*
 !.env.sample
-client/src/.env*
+site/src/.env*
+!site/src/.env.sample
 test.js
