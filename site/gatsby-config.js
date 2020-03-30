@@ -15,6 +15,11 @@ var mongoDBExtraParams = process.env.NODE_ENV == 'production' ?
   : undefined;
 
 module.exports = {
+  siteMetadata: {
+    title: `Learn Chinese Club Videos`,
+    siteUrl: 'https://videos.learnchinese.club',
+    lastUpdate: new Date().toUTCString()
+  },
   plugins: [
     {
       resolve: 'gatsby-plugin-google-analytics',
