@@ -25,9 +25,15 @@ export async function getChannelsFromGoogleSheet() {
   await doc.loadInfo();
 
   const sheet = doc.sheetsByIndex[0]; // or use doc.sheetsById[id]
-  const channels = await sheet.getRows();
+  var channels = await sheet.getRows();
 
-  console.log(`Found ${channels.length} channels`);
+  // Rename the id column, so we can use this array elsewhere
+  channels = channels.map(channel => {
+    let { id: _id, ...data } = channel;
+    return { _id, ...data };
+  });
+
+  console.log(`Found ${channels.length} channels in Google sheet`);
 
   return channels;
 }
@@ -49,6 +55,7 @@ export async function getLatestVideosFromRSS(channels) {
         item.rating = Number(item.media['media:community'][0]['media:starRating'][0]['$']['average']);
         item.views = Number(item.media['media:community'][0]['media:statistics'][0]['$']['views']);
         item.channel_id = channel.channel_id;
+        item.video_id = item._id;
         item.published_at = item.pubDate;
 
         ['media', 'id', 'isoDate', 'pubDate'].forEach(k => delete item[k]);
@@ -86,15 +93,10 @@ export async function saveVideosToDB(videos) {
 
 export async function saveChannels(channels) {
   try {
-    let response = await Channel.bulkWrite(channels.map(({ id, homepage, twitter, instagram})  => ({
+    let response = await Channel.bulkWrite(channels.map((channel)  => ({
       updateOne: {
-        filter: { _id: id },
-        update: {
-          _id: id,
-          ...(homepage && { homepage }),
-          ...(twitter && { twitter }),
-          ...(instagram && { instagram })
-        },
+        filter: { _id: channel._id },
+        update: channel,
         upsert: true
       }
     })));
@@ -147,7 +149,7 @@ export async function updateChannelInfo(channels) {
       }
     })));
 
-    console.log(`Saving new channels to database (${response.upsertedCount} added)`);
+    console.log(`Saving channel updates to database (${response.upsertedCount} added)`);
   } catch (err) {
     console.error(`Couldn't update channel data to the database: ${err.message}`);
 
