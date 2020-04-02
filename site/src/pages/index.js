@@ -33,7 +33,9 @@ export const query = graphql`
         id
         author
         thumbnail {
-          url
+          mq {
+            url
+          }
         }
         title
         link

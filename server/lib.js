@@ -51,9 +51,24 @@ export async function getLatestVideosFromRSS(channels) {
       // Distill each item down to only the data we want
       feed.items.forEach(item => {
         item.description = ellipsize(item.media['media:description'][0], 200, { truncate: false });
-        item.thumbnail = item.media['media:thumbnail'][0]['$'];
+
+        let thumbnail = item.media['media:thumbnail'][0]['$'];
+        item.thumbnail = {
+          hq: {
+            url: thumbnail.url,
+            width: Number(thumbnail.width),
+            height: Number(thumbnail.height)
+          },
+          mq: {
+            url: thumbnail.url.replace('hqdefault', 'mqdefault'),
+            width: 320,
+            height: 180
+          }
+        };
+
         item.rating = Number(item.media['media:community'][0]['media:starRating'][0]['$']['average']);
         item.views = Number(item.media['media:community'][0]['media:statistics'][0]['$']['views']);
+
         item.channel_id = channel.channel_id;
         item.video_id = item._id;
         item.published_at = item.pubDate;

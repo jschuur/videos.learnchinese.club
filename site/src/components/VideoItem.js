@@ -35,7 +35,7 @@ export default function VideoItem({ video: { title, link, thumbnail, author, pub
     <VideoCard>
       <Author>{ author }</Author>
       <a href={ link }>
-        <Thumbnail src={ thumbnail.url.replace('hqdefault', 'mqdefault') } alt={ title }/>
+        <Thumbnail src={ thumbnail.mq.url } alt={ title }/>
       </a>
       <Title>{ title }</Title>
       <Age date={ published_at } />
