@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import TimeAgo from 'react-timeago';
 
 const VideoCard = styled.div`
-  margin-top: 20px;
+  margin: 10px;
   max-width: 300px;
   a > img {
     width: 100%;
