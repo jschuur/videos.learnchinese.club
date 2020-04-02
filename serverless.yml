@@ -50,15 +50,9 @@ functions:
     timeout: 60
     events:
       - schedule: rate(30 minutes)
-      - http:
-          path: update/videos
-          method: get
 
   update_channels:
     handler: server/update.channels
     timeout: 60
     events:
       - schedule: rate(6 hours)
-      - http:
-          path: update/channels
-          method: get

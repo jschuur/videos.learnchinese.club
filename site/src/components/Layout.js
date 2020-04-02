@@ -11,27 +11,41 @@ const Container = styled.div`
 
 const Footer = styled.div`
   margin-top: 20px;
+  font-size: 0.8rem;
+  color: grey;
+  text-align: center;
 `;
 
 const Layout = ({ children }) => {
   const data = useStaticQuery(graphql`
-    query SiteTitleQuery {
-      site {
-        siteMetadata {
-          lastUpdate
-        }
+  {
+    videos: allMongodbChineseyoutubeVideos {
+      totalCount
+    }
+
+    channels: allMongodbChineseyoutubeChannels {
+      totalCount
+    }
+
+    site {
+      siteMetadata {
+        lastUpdate
       }
     }
-  `)
-  const { lastUpdate } = data.site.siteMetadata
+  }`);
+
+  const { lastUpdate } = data.site.siteMetadata;
+  const { totalCount: videoCount } = data.videos;
+  const { totalCount: channelCount } = data.channels;
 
   return (
     <Container>
       { children }
 
       <Footer>
-        © {new Date().getFullYear()} by <a href="https://twitter.com/joostschuur">Joost Schuur</a>.
-        Built with {` `} <a href="https://www.gatsbyjs.org">Gatsby</a>, last updated: { lastUpdate }.
+        © {new Date().getFullYear()} by <a href="https://twitter.com/joostschuur">Joost Schuur</a>,
+        built with <a href="https://www.gatsbyjs.org">Gatsby</a>.
+        Last updated: { lastUpdate } ({videoCount} videos, {channelCount} channels)
       </Footer>
       </Container>
   )
