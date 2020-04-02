@@ -58,7 +58,7 @@ functions:
     handler: server/update.channels
     timeout: 60
     events:
-      # - schedule: rate(6 hours)
+      - schedule: rate(6 hours)
       - http:
           path: update/channels
           method: get
