@@ -33,7 +33,7 @@ export default () => {
 
   return (
     <Footer>
-      © {new Date().getFullYear()} by <a href="https://twitter.com/joostschuur">Joost Schuur</a> (<a href="https://twitter.com/LearnChineseCLB">@learnchineseclub</a>),
+      © {new Date().getFullYear()} by <a href="https://twitter.com/joostschuur">Joost Schuur</a> (<a href="https://twitter.com/LearnChineseCLB">@LearnChineseCLB</a>),
       built with <a href="https://www.gatsbyjs.org">Gatsby</a>.
       Last updated: { lastUpdate } ({videoCount} videos, {channelCount} channels)
     </Footer>
