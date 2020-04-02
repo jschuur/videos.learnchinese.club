@@ -16,4 +16,8 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          script: cd videos.learnchinese.club/site; npm run update
+          script: |
+            cd videos.learnchinese.club/site 
+            npm install
+            npm run build
+            npm run deploy
