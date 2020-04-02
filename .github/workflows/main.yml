@@ -1,0 +1,19 @@
+name: Redeploy Gatsby site
+
+on:
+  push:
+    branches:
+    - production
+
+jobs:
+  redeploy-gatsby:
+    name: Redeploy Gatsby site
+    runs-on: ubuntu-latest
+    steps:
+      - name: ssh to instance and run commands
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: cd videos.learnchinese.club/site; npm run update
