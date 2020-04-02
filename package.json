@@ -16,6 +16,7 @@
     "update:channels:prod": "serverless invoke local -f update_channels --env production",
     "update:channels:both": "npm run update:channels && npm run update:channels:prod",
     "update:all": "npm run update:channels:both && npm run update:videos:both",
+    "test": "babel-node -r dotenv/config test.js dotenv_config_path=.env.development",
     "util:archives": "babel-node -r dotenv/config util/archives.js dotenv_config_path=.env.development"
   },
   "keywords": [],

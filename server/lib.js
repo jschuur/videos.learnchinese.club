@@ -1,11 +1,12 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
-import { google } from 'googleapis';
 import ellipsize from 'ellipsize';
 import pluralize from 'pluralize';
 import Parser from 'rss-parser';
 
 import Video from './models/Video';
 import Channel from './models/Channel';
+
+import { batchYouTubeRequest } from './util';
 
 const parser = new Parser({
   customFields: {
@@ -127,19 +128,14 @@ export async function saveChannels(channels) {
 export async function updateChannelInfo(channels) {
   console.log(`Loaded ${ channels.length } channels for info update`);
 
-  const youtube = google.youtube({
-    version: 'v3',
-    auth: process.env.YOUTUBE_API_KEY,
-  });
-
-  // TODO: Do in chunks (of 50?) based on API limit
-  var response = await youtube.channels.list({
+  var response = await batchYouTubeRequest({
+    endpoint: 'channels.list',
     part: 'snippet,statistics,contentDetails',
-    id: channels.map(c => c._id).join(',')
+    ids: channels.map(c => c._id)
   });
 
   // TODO: Error check response
-  const channel_data = response.data.items.map(channel => {
+  const channel_data = response.map(channel => {
     var { snippet, contentDetails, statistics } = channel;
 
     return {
