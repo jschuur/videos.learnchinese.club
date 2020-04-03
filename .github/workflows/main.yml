@@ -17,7 +17,8 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            cd videos.learnchinese.club/site 
+            cd videos.learnchinese.club/site
+            git pull
             npm install
             npm run build
             npm run deploy
