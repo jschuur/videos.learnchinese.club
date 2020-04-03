@@ -9,8 +9,7 @@ export default mongoose.model('Video', new Schema({
   channel_id: String,
   video_id: String,
   description: String,
-  thumbnail: Schema.Types.Mixed,
-  rating: Number,
-  views: Number,
+  statistics: Schema.Types.Mixed,
+  content_details: Schema.Types.Mixed,
   published_at: Date
 }));

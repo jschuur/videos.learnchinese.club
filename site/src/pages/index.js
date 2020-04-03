@@ -31,12 +31,8 @@ export const query = graphql`
     ) {
       nodes {
         id
+        video_id
         author
-        thumbnail {
-          mq {
-            url
-          }
-        }
         title
         link
         published_at

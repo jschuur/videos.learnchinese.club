@@ -2,6 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 import TimeAgo from 'react-timeago';
 
+import { getVideoThumbnail } from '../util';
+
 const VideoCard = styled.div`
   margin: 10px;
   max-width: 300px;
@@ -30,12 +32,14 @@ const Title = styled.div`
   margin-bottom: 5px;
 `
 
-export default function VideoItem({ video: { title, link, thumbnail, author, published_at }}) {
+export default function VideoItem({ video: { video_id, title, link, author, published_at }}) {
+  var thumbnail = getVideoThumbnail(video_id, 'medium');
+
   return (
     <VideoCard>
       <Author>{ author }</Author>
       <a href={ link }>
-        <Thumbnail src={ thumbnail.mq.url } alt={ title }/>
+        <Thumbnail src={ thumbnail.url } width={ thumbnail.width } height={ thumbnail.height } alt={ title }/>
       </a>
       <Title>{ title }</Title>
       <Age date={ published_at } />

@@ -2,8 +2,9 @@ import mongoose from 'mongoose';
 
 import {
   getChannels,
-  getLatestVideosFromRSS,
-  saveVideosToDB,
+  getLatestVideos,
+  saveVideos,
+  updateVideos,
   updateChannelInfo,
   getChannelsFromGoogleSheet,
   saveChannels
@@ -22,17 +23,21 @@ export async function videos(event, context) {
 
   var channels = await getChannels();
 
+  // If there's an uninitialized channels collection, grab the list from the spreadsheet
   if(!channels.length) {
     console.log('No channels in the database. Seeding from Google sheet');
     channels = await getChannelsFromGoogleSheet();
     await saveChannels(channels);
-    await updateChannelInfo(channels);
 
     channels = await getChannels();
+    await updateChannelInfo(channels);
   }
 
-  const videos = await getLatestVideosFromRSS(channels);
-  const response = await saveVideosToDB(videos);
+  const videos = await getLatestVideos(channels);
+  const response = await saveVideos(videos);
+
+  // Get additional details for any new videos
+  response.nUpserted && await updateVideos(Object.values(response.upsertedIds), { details: true });
 
   mongoose.disconnect();
 
@@ -56,6 +61,8 @@ export async function channels(event, context) {
     console.log('No channels in the database. Seeding from Google sheet');
     channels = await getChannelsFromGoogleSheet();
     await saveChannels(channels);
+
+    channels = await getChannels();
   }
 
   const response = await updateChannelInfo(channels);
@@ -66,6 +73,6 @@ export async function channels(event, context) {
   return buildResponse(200, {
     status: 'Success',
     channels: channels.length,
-    response
+    modified: response.nModified
   });
 };

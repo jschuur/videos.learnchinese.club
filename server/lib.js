@@ -1,20 +1,10 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
-import ellipsize from 'ellipsize';
 import pluralize from 'pluralize';
-import Parser from 'rss-parser';
 
 import Video from './models/Video';
 import Channel from './models/Channel';
 
-import { batchYouTubeRequest } from './util';
-
-const parser = new Parser({
-  customFields: {
-    item: [['media:group', 'media'], ['yt:videoId', '_id']]
-  }
-});
-
-const feedURL = (channel_id) => `https://www.youtube.com/feeds/videos.xml?channel_id=${channel_id}`;
+import { batchYouTubeRequest, buildYouTubeVideoLink } from './util';
 
 export async function getChannels() {
   return await Channel.find({}).exec();
@@ -31,7 +21,7 @@ export async function getChannelsFromGoogleSheet() {
   // Rename the id column, so we can use this array elsewhere
   channels = channels.map(channel => {
     let { id: _id, ...data } = channel;
-    return { _id, ...data };
+    return { _id, channel_id: _id, ...data };
   });
 
   console.log(`Found ${channels.length} channels in Google sheet`);
@@ -40,59 +30,44 @@ export async function getChannelsFromGoogleSheet() {
 }
 
 // Grab recent videos via their RSS feed
-export async function getLatestVideosFromRSS(channels) {
-  var videos = [];
+export async function getLatestVideos(channels) {
+  console.log(`Requesting recent uploads via API for ${channels.length} channels`);
 
-  console.log(`Looking at RSS feeds for ${channels.length} channels`);
+  // In scheduled use, we should only look through the latest 10-20 videos until a better check can be done
+  const MAX_RESULTS = 20;
 
-  for(let channel of channels) {
-    try {
-      var feed = await parser.parseURL(feedURL(channel.channel_id));
+  // https://developers.google.com/youtube/v3/docs/playlistItems/list
+  const response = await batchYouTubeRequest({
+    endpoint: 'playlistItems.list',
+    part: 'snippet',
+    playlistIds: channels.map(c => c.uploads_playlist_id),
+    maxResults: MAX_RESULTS
+  });
 
-      // Distill each item down to only the data we want
-      feed.items.forEach(item => {
-        item.description = ellipsize(item.media['media:description'][0], 200, { truncate: false });
+  // Extract the data we want per video
+  const videos = response.map(item => (
+    {
+      video_id: item.snippet.resourceId.videoId,
+      channel_id: item.snippet.channelId,
+      published_at: item.snippet.publishedAt,
 
-        let thumbnail = item.media['media:thumbnail'][0]['$'];
-        item.thumbnail = {
-          hq: {
-            url: thumbnail.url,
-            width: Number(thumbnail.width),
-            height: Number(thumbnail.height)
-          },
-          mq: {
-            url: thumbnail.url.replace('hqdefault', 'mqdefault'),
-            width: 320,
-            height: 180
-          }
-        };
+      title: item.snippet.title,
+      link: buildYouTubeVideoLink(item.snippet.resourceId.videoId),
+      description: item.snippet.description,
+      author: item.snippet.channelTitle
+    })
+  );
 
-        item.rating = Number(item.media['media:community'][0]['media:starRating'][0]['$']['average']);
-        item.views = Number(item.media['media:community'][0]['media:statistics'][0]['$']['views']);
+  console.log(`Found ${videos.length} videos via API`);
 
-        item.channel_id = channel.channel_id;
-        item.video_id = item._id;
-        item.published_at = item.pubDate;
-
-        ['media', 'id', 'isoDate', 'pubDate'].forEach(k => delete item[k]);
-      });
-
-      videos.push(...feed.items);
-    } catch(err) {
-      console.error(`Unable to get data for ${channel.name}`);
-    }
-  }
-
-  console.log(`Found ${videos.length} videos in RSS feeds`);
-
-  return videos.sort((a, b) => -a.published_at.localeCompare(b.published_at));
+  return videos;
 }
 
-export async function saveVideosToDB(videos) {
+export async function saveVideos(videos) {
   try {
     let response = await Video.bulkWrite(videos.map(video => ({
       updateOne: {
-        filter: {_id: video._id},
+        filter: {_id: video.video_id},
         update: video,
         upsert: true
       }
@@ -105,6 +80,39 @@ export async function saveVideosToDB(videos) {
     console.error(`Couldn't save videos to the database: ${err.message}`);
     // TODO: throw new Error()
   }
+}
+
+export async function updateVideos(ids, { details }) {
+  console.log(`Updating ${ ids.length } videos (${details ? 'with' : 'without'} details)`);
+
+  var part = `statistics,id${details ? ',contentDetails' : ''}`;
+
+  // https://developers.google.com/youtube/v3/docs/videos/list
+  var response = await batchYouTubeRequest({
+    endpoint: 'videos.list',
+    part,
+    ids
+  });
+
+  try {
+    await Video.bulkWrite(response.map(video  => ({
+      updateOne: {
+        filter: { _id: video.id },
+        update: {
+          statistics: video.statistics,
+          content_details: video.contentDetails
+        },
+        upsert: true
+      }
+    })));
+
+  } catch (err) {
+    console.error(`Couldn't update channel data to the database: ${err.message}`);
+
+    return;
+  }
+
+  return;
 }
 
 export async function saveChannels(channels) {
@@ -128,10 +136,11 @@ export async function saveChannels(channels) {
 export async function updateChannelInfo(channels) {
   console.log(`Loaded ${ channels.length } channels for info update`);
 
+  // https://developers.google.com/youtube/v3/docs/channels/list
   var response = await batchYouTubeRequest({
     endpoint: 'channels.list',
     part: 'snippet,statistics,contentDetails',
-    ids: channels.map(c => c._id)
+    ids: channels.map(c => c.channel_id)
   });
 
   // TODO: Error check response
