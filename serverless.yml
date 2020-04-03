@@ -49,7 +49,7 @@ functions:
     handler: server/update.videos
     timeout: 60
     events:
-      - schedule: rate(30 minutes)
+      - schedule: rate(60 minutes)
 
   update_channels:
     handler: server/update.channels
