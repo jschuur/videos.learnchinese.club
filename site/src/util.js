@@ -5,7 +5,7 @@ export function getVideoThumbnail(videoId, resolution) {
     high: { prefix: 'hq', width: 480, height: 360 },
     standard: { prefix: 'sd', width: 640, height: 480 },
     maxres: { prefix: 'maxres', width: 1280, height: 720 },
-  }
+  };
 
   const { prefix, width, height } = resolutions[resolution];
 

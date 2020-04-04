@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 import {
   getChannels,
-  getLatestVideos,
+  getLatestVideosFromRSS,
   saveVideos,
   updateVideos,
   updateChannelInfo,
@@ -33,7 +33,7 @@ export async function videos(event, context) {
     await updateChannelInfo(channels);
   }
 
-  const videos = await getLatestVideos(channels);
+  const videos = await getLatestVideosFromRSS(channels);
   const response = await saveVideos(videos);
 
   // Get additional details for any new videos
@@ -73,6 +73,7 @@ export async function channels(event, context) {
   return buildResponse(200, {
     status: 'Success',
     channels: channels.length,
-    modified: response.nModified
+    modified: response.nModified,
+    added: response.upsertedCount
   });
 };

@@ -1,9 +1,9 @@
 {
   "name": "videos.learnchinese.club",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "description": "Lists recent YouTube videos for Chinese language learning",
   "scripts": {
-    "dev:site": "npm run develop --prefix site",
+    "dev:site": "npm run dev --prefix site",
     "dev:server": "serverless offline --watch",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:site\"",
     "build:site": "npm run build --prefix site",
@@ -16,8 +16,7 @@
     "update:channels:prod": "serverless invoke local -f update_channels --env production",
     "update:channels:both": "npm run update:channels && npm run update:channels:prod",
     "update:all": "npm run update:channels:both && npm run update:videos:both",
-    "test": "babel-node -r dotenv/config test.js dotenv_config_path=.env.development",
-    "util:archives": "babel-node -r dotenv/config util/archives.js dotenv_config_path=.env.development"
+    "test": "babel-node -r dotenv/config test.js dotenv_config_path=.env.development"
   },
   "keywords": [],
   "author": "Joost Schuur <jschuur@jschuur.com>",
@@ -30,6 +29,7 @@
     "lodash.chunk": "^4.2.0",
     "mongoose": "^5.9.5",
     "pluralize": "^8.0.0",
+    "rss-parser": "^3.7.6",
     "saslprep": "^1.0.3"
   },
   "devDependencies": {

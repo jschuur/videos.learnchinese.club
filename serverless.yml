@@ -47,7 +47,7 @@ functions:
 
   update_videos:
     handler: server/update.videos
-    timeout: 60
+    timeout: 30
     events:
       - schedule: rate(60 minutes)
 

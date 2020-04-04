@@ -1,10 +1,22 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import pluralize from 'pluralize';
+import Parser from 'rss-parser';
 
 import Video from './models/Video';
 import Channel from './models/Channel';
 
-import { batchYouTubeRequest, buildYouTubeVideoLink } from './util';
+import {
+  batchYouTubeRequest,
+  buildYouTubeVideoLink,
+  buildFeedUrl,
+  debug
+} from './util';
+
+const parser = new Parser({
+  customFields: {
+    item: [['media:group', 'media'], ['yt:videoId', '_id']]
+  }
+});
 
 export async function getChannels() {
   return await Channel.find({}).exec();
@@ -30,8 +42,44 @@ export async function getChannelsFromGoogleSheet() {
 }
 
 // Grab recent videos via their RSS feed
-export async function getLatestVideos(channels) {
-  console.log(`Requesting recent uploads via API for ${channels.length} channels`);
+export async function getLatestVideosFromRSS(channels) {
+  var videos = [];
+
+  console.log(`Looking for recent uploads via RSS feeds for ${channels.length} channels`);
+
+  for(let channel of channels) {
+    try {
+      debug(`Getting updates via RSS for ${channel.title}`);
+      let feed = await parser.parseURL(buildFeedUrl(channel.channel_id));
+
+      // Distill each item down to only the data we want
+      let channel_videos = feed.items.map(item => (
+        {
+          video_id: item._id,
+          channel_id: channel.channel_id,
+          published_at: item.pubDate,
+
+          title: item.media['media:title'][0],
+          link: buildYouTubeVideoLink(item._id),
+          description: item.media['media:description'][0],
+          author: item.author
+        }
+      ));
+
+      videos.push(...channel_videos);
+    } catch(err) {
+      console.error(`Unable to get data for ${channel.name}`);
+    }
+  }
+
+  console.log(`Found ${videos.length} videos in RSS feeds`);
+
+  return videos.sort((a, b) => -a.published_at.localeCompare(b.published_at));
+}
+
+// Grab recent videos via the API feed
+export async function getLatestVideosFromAPI(channels) {
+  console.log(`Looking for recent uploads via API for ${channels.length} channels`);
 
   // In scheduled use, we should only look through the latest 10-20 videos until a better check can be done
   const MAX_RESULTS = 20;
@@ -169,7 +217,7 @@ export async function updateChannelInfo(channels) {
       }
     })));
 
-    console.log(`Saving channel updates to database (${response.upsertedCount} added)`);
+    console.log(`Saving channel updates to database (${response.nModified} modified, ${response.upsertedCount} added)`);
   } catch (err) {
     console.error(`Couldn't update channel data to the database: ${err.message}`);
 
