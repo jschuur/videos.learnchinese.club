@@ -1,31 +1,26 @@
+import React from 'react'
 import { graphql } from 'gatsby'
-import React from 'react';
-import styled from 'styled-components';
 
-import Layout from '../components/Layout';
+import Layout from '../components/layout'
 import VideoList from '../components/VideoList';
 import Pagination from '../components/Pagination';
 
-const Header = styled.h1`
-  text-align: center;
-`;
-
-export default ({data}) => {
-  const { nodes: videos } = data.allMongodbChineseyoutubeVideos;
+export default ({ data, pageContext }) => {
+  const videos = data.allMongodbChineseyoutubeVideos.nodes;
 
   return (
     <Layout>
-      <Header>Recent Videos</Header>
-      <VideoList videos={ videos } />
-      <Pagination page={ 1 } />
+        <VideoList videos={ videos } />
+        <Pagination page={ pageContext.currentPage } />
     </Layout>
   );
 }
 
 export const query = graphql`
-  query RecentVideosQuery {
+  query VideoArchiveQuery($skip: Int!, $limit: Int!) {
     allMongodbChineseyoutubeVideos(
-      limit: 30
+      limit: $limit
+      skip: $skip
       sort: {
         fields: [published_at]
         order: DESC
