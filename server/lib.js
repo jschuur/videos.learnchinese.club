@@ -216,7 +216,7 @@ export async function updateChannelInfo(channels) {
     ids: channels.map(c => c.channel_id)
   });
 
-  if(response && response.length) {
+  if(response?.length) {
     try {
       response = await Channel.bulkWrite(response.map(channel  => {
         let data = extractChannelData(channel);

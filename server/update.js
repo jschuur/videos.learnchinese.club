@@ -21,8 +21,6 @@ export async function videos(event, context) {
     const { upsertedCount } = await saveVideos(videos);
 
     var response = buildHttpResponse({
-      statusCode: 200,
-      status: 'Success',
       channels: channels.length,
       new_videos: upsertedCount
     });
@@ -42,11 +40,11 @@ export async function channels(event, context) {
     await dbConnect();
 
     const channels = await getChannels({ skipUpdate: true });
+    if(!channels?.length) throw new APIError(400, 'No channels found for videos update');
+
     const { nModified, upsertedCount } = await updateChannelInfo(channels);
 
     var response = buildHttpResponse({
-      statusCode: 200,
-      status: 'Success',
       channels: channels.length,
       modified: nModified,
       added: upsertedCount
