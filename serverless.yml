@@ -1,11 +1,17 @@
 service: videos-learnchinese-club
 
 plugins:
-  - serverless-bundle
+  # - serverless-bundle
+  - serverless-webpack
   - serverless-dotenv-plugin
   - serverless-offline-dotenv
   - serverless-offline
   - serverless-domain-manager
+
+package:
+  individually: true
+  excludeDevDependencies: true
+  browser: false
 
 custom:
   stage: ${opt:stage, self:provider.stage}
