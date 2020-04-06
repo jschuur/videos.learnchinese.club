@@ -12,4 +12,6 @@ export default mongoose.model('Video', new Schema({
   statistics: Schema.Types.Mixed,
   content_details: Schema.Types.Mixed,
   published_at: Date
+}, {
+  versionKey: false
 }));

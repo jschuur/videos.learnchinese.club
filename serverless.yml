@@ -3,6 +3,7 @@ service: videos-learnchinese-club
 plugins:
   - serverless-bundle
   - serverless-dotenv-plugin
+  - serverless-offline-dotenv
   - serverless-offline
   - serverless-domain-manager
 
@@ -31,18 +32,26 @@ provider:
 
 functions:
   videos:
-    handler: server/api/videos.handler
+    handler: server/api/videos.get
     events:
       - http:
           path: videos
           method: get
           cors: true
 
+  channels:
+    handler: server/api/channels.post
+    events:
+      - http:
+          path: channels
+          method: post
+          cors: true
+
   status:
     handler: server/api/status.handler
     events:
       - http:
-          path: status/{type}
+          path: status/
           method: get
 
   update_videos:

@@ -4,76 +4,54 @@ import {
   getChannels,
   getLatestVideosFromRSS,
   saveVideos,
-  updateVideos,
-  updateChannelInfo,
-  getChannelsFromGoogleSheet,
-  saveChannels
+  updateChannelInfo
 } from './lib';
-import './db';
+import { buildHttpResponse } from './util';
 
-function buildResponse(statusCode, body) {
-  return {
-    statusCode,
-    body: JSON.stringify(body, null, 2)
-  };
-}
+import './db';
 
 export async function videos(event, context) {
   console.log(`Searching for updated videos...`);
 
-  var channels = await getChannels();
+  try {
+    const channels = await getChannels();
+    const videos = await getLatestVideosFromRSS(channels);
+    const { upsertedCount } = await saveVideos(videos);
 
-  // If there's an uninitialized channels collection, grab the list from the spreadsheet
-  if(!channels.length) {
-    console.log('No channels in the database. Seeding from Google sheet');
-    channels = await getChannelsFromGoogleSheet();
-    await saveChannels(channels);
+    mongoose.disconnect();
 
-    channels = await getChannels();
-    await updateChannelInfo(channels);
-  }
-
-  const videos = await getLatestVideosFromRSS(channels);
-  const response = await saveVideos(videos);
-
-  // Get additional details for any new videos
-  response.nUpserted && await updateVideos(Object.values(response.upsertedIds), { details: true });
-
-  mongoose.disconnect();
-
-  // TODO error handling
-  return buildResponse(200, {
-      message: "Success",
+    return buildHttpResponse(200, "Success", {
       channels: channels.length,
-      new_videos: response.upsertedCount
+      new_videos: upsertedCount
     });
+  } catch(err) {
+    mongoose.disconnect();
+
+    let errMsg = `Error updating videos: ${err.message}`;
+    console.error(errMsg);
+    return buildHttpResponse(500, errMsg);
+  }
 };
 
 export async function channels(event, context) {
   console.log(`Updating channel info...`);
 
-  // TODO: Also trigger spreadsheet update via flag
+  try {
+    var channels = await getChannels({ skipUpdate: true });
+    const { nModified, upsertedCount } = await updateChannelInfo(channels);
 
-  var channels = await getChannels();
+    mongoose.disconnect();
 
-  // If there's an uninitialized channels collection, grab the list from the spreadsheet
-  if(!channels.length) {
-    console.log('No channels in the database. Seeding from Google sheet');
-    channels = await getChannelsFromGoogleSheet();
-    await saveChannels(channels);
+    return buildHttpResponse(200, 'Success', {
+      channels: channels.length,
+      modified: nModified,
+      added: upsertedCount
+    });
+  } catch(err) {
+    mongoose.disconnect();
 
-    channels = await getChannels();
+    let errMsg = `Error updating channels: ${err.message}`;
+    console.error(errMsg);
+    return buildHttpResponse(500, errMsg);
   }
-
-  const response = await updateChannelInfo(channels);
-
-  mongoose.disconnect();
-
-    // TODO: error handling
-  return buildResponse(200, {
-    status: 'Success',
-    channels: channels.length,
-    modified: response.nModified,
-    added: response.upsertedCount
-  });
-};
+}

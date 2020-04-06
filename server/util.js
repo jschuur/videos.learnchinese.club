@@ -76,3 +76,17 @@ export function getVideoThumbnail(videoId, resolution) {
 }
 
 export const buildFeedUrl = (channel_id) => `https://www.youtube.com/feeds/videos.xml?channel_id=${channel_id}`;
+
+export function buildHttpResponse(statusCode, message, data) {
+  return {
+    statusCode,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true,
+    },
+    body: JSON.stringify({
+      message,
+      ...data
+    })
+  };
+}

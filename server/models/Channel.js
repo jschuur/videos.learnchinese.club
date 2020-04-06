@@ -15,4 +15,6 @@ export default mongoose.model('Channel', new Schema({
   homepage: String,
   twitter: String,
   instagram: String
+}, {
+  versionKey: false
 }));

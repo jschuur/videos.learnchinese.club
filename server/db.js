@@ -9,7 +9,6 @@ import mongoose from 'mongoose';
   } catch (err) {
     console.error(`Couldn't connect to database: ${err.message}`);
 
-    // TODO: throw error
     process.exit(1);
   }
 })();

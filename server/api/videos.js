@@ -1,25 +1,12 @@
 import mongoose from 'mongoose';
 
+import '../db';
+
 import Video from '../models/Video';
+import { buildHttpResponse } from '../util';
 
-function buildResponse(statusCode, body) {
-  return {
-    statusCode,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': true,
-    },
-    body: JSON.stringify(body)
-  };
-}
-
-export async function handler(event, context) {
+export async function get(event, context) {
   try {
-    await mongoose.connect(process.env.MONGODB_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-
     const videos =  await Video
       .find({})
       .sort({ published_at: -1 })
@@ -28,8 +15,8 @@ export async function handler(event, context) {
 
     mongoose.disconnect();
 
-    return buildResponse(200, { status: "Success", videos });
+    return buildHttpResponse(200, 'Success', { videos });
   } catch (err) {
-    return buildResponse(500, { status: `Error: ${err.message}` });
+    return buildHttpResponse(500, `Error: ${err.message}`);
   }
 };

@@ -18,8 +18,21 @@ const parser = new Parser({
   }
 });
 
-export async function getChannels() {
-  return await Channel.find({}).exec();
+export async function getChannels({ skipUpdate } = {}) {
+  var channels = await Channel.find({}).exec();
+
+  if(!channels.length) {
+    console.log('No channels in the database. Seeding from Google sheet');
+    channels = await getChannelsFromGoogleSheet();
+    await saveChannels(channels);
+    if(!skipUpdate) {
+      await updateChannelInfo(channels);
+    }
+
+    channels = await Channel.find({}).exec();
+  }
+
+  return channels;
 }
 
 export async function getChannelsFromGoogleSheet() {
@@ -41,74 +54,67 @@ export async function getChannelsFromGoogleSheet() {
   return channels;
 }
 
+function extractVideoDataRSS(video, channelId) {
+  return {
+    video_id: video._id,
+    channel_id: channelId,
+    published_at: video.pubDate,
+
+    title: video.media['media:title'][0],
+    link: buildYouTubeVideoLink(video._id),
+    description: video.media['media:description'][0],
+    author: video.author
+  };
+}
+
 // Grab recent videos via their RSS feed
 export async function getLatestVideosFromRSS(channels) {
-  var videos = [];
-
   console.log(`Looking for recent uploads via RSS feeds for ${channels.length} channels`);
 
-  for(let channel of channels) {
+  const videos = (await Promise.all(channels.map(async channel => {
     try {
       debug(`Getting updates via RSS for ${channel.title}`);
       let feed = await parser.parseURL(buildFeedUrl(channel.channel_id));
 
-      // Distill each item down to only the data we want
-      let channel_videos = feed.items.map(item => (
-        {
-          video_id: item._id,
-          channel_id: channel.channel_id,
-          published_at: item.pubDate,
-
-          title: item.media['media:title'][0],
-          link: buildYouTubeVideoLink(item._id),
-          description: item.media['media:description'][0],
-          author: item.author
-        }
-      ));
-
-      videos.push(...channel_videos);
+      return feed.items.map(video => extractVideoDataRSS(video, channel.channel_id));
     } catch(err) {
       console.error(`Unable to get data for ${channel.name}`);
-    }
-  }
+    };
+  }))).flat();
 
   console.log(`Found ${videos.length} videos in RSS feeds`);
 
-  return videos.sort((a, b) => -a.published_at.localeCompare(b.published_at));
+  return videos;
+}
+
+function extractVideoDataAPI({ snippet }) {
+  return {
+    video_id: snippet.resourceId.videoId,
+    channel_id: snippet.channelId,
+    published_at: snippet.publishedAt,
+
+    title: snippet.title,
+    link: buildYouTubeVideoLink(snippet.resourceId.videoId),
+    description: snippet.description,
+    author: snippet.channelTitle
+  };
 }
 
 // Grab recent videos via the API feed
-export async function getLatestVideosFromAPI(channels) {
+export async function getLatestVideosFromAPI(channels, maxResults = 20) {
   console.log(`Looking for recent uploads via API for ${channels.length} channels`);
-
-  // In scheduled use, we should only look through the latest 10-20 videos until a better check can be done
-  const MAX_RESULTS = 20;
 
   // https://developers.google.com/youtube/v3/docs/playlistItems/list
   const response = await batchYouTubeRequest({
     endpoint: 'playlistItems.list',
     part: 'snippet',
     playlistIds: channels.map(c => c.uploads_playlist_id),
-    maxResults: MAX_RESULTS
+    maxResults
   });
 
-  // Extract the data we want per video
-  const videos = response.map(item => (
-    {
-      video_id: item.snippet.resourceId.videoId,
-      channel_id: item.snippet.channelId,
-      published_at: item.snippet.publishedAt,
+  console.log(`Found ${response.length} videos via API`);
 
-      title: item.snippet.title,
-      link: buildYouTubeVideoLink(item.snippet.resourceId.videoId),
-      description: item.snippet.description,
-      author: item.snippet.channelTitle
-    })
-  );
-
-  console.log(`Found ${videos.length} videos via API`);
-
-  return videos;
+  return response.map(extractVideoDataAPI);
 }
 
 export async function saveVideos(videos) {
@@ -123,10 +129,11 @@ export async function saveVideos(videos) {
 
     console.log(`${pluralize('new video', response.upsertedCount, true)} added`);
 
+    response.nUpserted && await updateVideos(Object.values(response.upsertedIds), { details: true });
+
     return response;
   } catch (err) {
-    console.error(`Couldn't save videos to the database: ${err.message}`);
-    // TODO: throw new Error()
+    throw new Error(`Couldn't save videos to the database: ${err.message}`);
   }
 }
 
@@ -181,6 +188,23 @@ export async function saveChannels(channels) {
   }
 }
 
+// Get only the channel data we want to store from an API response
+function extractChannelData(channel) {
+  var { snippet, contentDetails, statistics } = channel;
+
+  return {
+    channel_id: channel.id,
+    title: snippet.title,
+    description: snippet.description,
+    customURL: snippet.customUrl,
+    published_at: snippet.publishedAt,
+    country: snippet.country,
+    thumbnails: snippet.thumbnails,
+    statistics,
+    uploads_playlist_id: contentDetails.relatedPlaylists.uploads,
+  };
+}
+
 export async function updateChannelInfo(channels) {
   console.log(`Loaded ${ channels.length } channels for info update`);
 
@@ -191,38 +215,82 @@ export async function updateChannelInfo(channels) {
     ids: channels.map(c => c.channel_id)
   });
 
-  // TODO: Error check response
-  const channel_data = response.map(channel => {
-    var { snippet, contentDetails, statistics } = channel;
+  if(response && response.length) {
+    try {
+      response = await Channel.bulkWrite(response.map(channel  => {
+        let data = extractChannelData(channel);
 
-    return {
-      channel_id: channel.id,
-      title: snippet.title,
-      description: snippet.description,
-      customURL: snippet.customUrl,
-      published_at: snippet.publishedAt,
-      country: snippet.country,
-      thumbnails: snippet.thumbnails,
-      statistics,
-      uploads_playlist_id: contentDetails.relatedPlaylists.uploads,
-    };
+        return {
+          updateOne: {
+            filter: { _id: data.channel_id },
+            update: data,
+            upsert: true
+          }
+        };
+      }));
+
+      console.log(`Saving channel updates to database (${response.nModified} modified, ${response.upsertedCount} added)`);
+
+      return response;
+    } catch (err) {
+      throw new Error(`Couldn't update channel data to the database: ${err.message}`);
+    }
+  } else {
+    throw new Error('YouTube API returned no channel info');
+  }
+}
+
+async function addChannelByChannelId(channelId) {
+  // Get the full channel data from the YouTube API
+  const [item] = await batchYouTubeRequest({
+    endpoint: 'channels.list',
+    part: 'snippet,contentDetails,statistics',
+    ids: [ channelId ]
   });
 
-  try {
-    response = await Channel.bulkWrite(channel_data.map(channel  => ({
-      updateOne: {
-        filter: { _id: channel.channel_id },
-        update: channel,
-        upsert: true
+  if(item) {
+    try {
+      let channel = extractChannelData(item);
+      let response = await Channel.updateOne(
+        { channel_id: channelId },
+        { _id: channelId, ...channel},
+        { upsert: true }
+      );
+      let { title } = channel;
+
+      if(response.upserted) {
+        let videos = await getLatestVideosFromAPI([channel], 50);
+        let { nUpserted } = await saveVideos(videos);
+
+        return `YouTube channel ${ title } added and ${ pluralize('video', nUpserted, true) } imported`;
+      } else {
+        return `YouTube channel ${ title } is already tracked`;
       }
-    })));
+    } catch(err) {
+      throw new Error(`Error saving new channel to database: ${ err.message }`);
+    }
+  } else {
+    throw new Error(`YouTube API returned no channel info for ${ channelId }`);
+  };
+}
 
-    console.log(`Saving channel updates to database (${response.nModified} modified, ${response.upsertedCount} added)`);
-  } catch (err) {
-    console.error(`Couldn't update channel data to the database: ${err.message}`);
+export async function addNewChannel({ videoId, channelId }) {
+  if(videoId) {
+    // Look up a video's channel first
+    const [ video ] = await batchYouTubeRequest({
+      endpoint: 'videos.list',
+      part: 'snippet',
+      ids: [ videoId ]
+    });
 
-    return;
+    if(video) {
+      return addChannelByChannelId(video.snippet.channelId);
+    } else {
+      throw new Error(`YouTube API returned no video info for ${ videoId }`);
+    }
+  } else if(channelId) {
+    return addChannelByChannelId(channelId);
+  } else {
+    throw new Error('Did not specify channel or video ID');
   }
-
-  return response;
 }
