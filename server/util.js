@@ -49,7 +49,13 @@ export async function batchYouTubeRequest({ endpoint, ids, playlistIds, ...optio
     apiOptions[idField] = chunk.join(',');
 
     debug(`batchYouTubeRequest to ${endpoint}`, apiOptions);
-    return (await youtube[model][action](apiOptions)).data.items;
+    try {
+      var response = await youtube[model][action](apiOptions);
+    } catch(err) {
+      throw new APIError(500, `YouTube API error calling ${endpoint} (${err.message})`);
+    }
+
+    return response.data.items;
   }))).flat();
 }
 
@@ -77,16 +83,30 @@ export function getVideoThumbnail(videoId, resolution) {
 
 export const buildFeedUrl = (channel_id) => `https://www.youtube.com/feeds/videos.xml?channel_id=${channel_id}`;
 
-export function buildHttpResponse(statusCode, message, data) {
+export function buildHttpResponse({ statusCode = 200, status = 'Success', ...data }) {
   return {
     statusCode,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': true,
     },
-    body: JSON.stringify({
-      message,
-      ...data
-    })
+    body: JSON.stringify({ status, ...data })
   };
+}
+
+export function buildHttpError(err) {
+  var { statusCode = 500, message: status } = err;
+
+  if(statusCode == 200 && !status) status = 'Success';
+
+  console.error(`Error: ${ statusCode } ${ status }`);
+  return buildHttpResponse({ statusCode, status });
+}
+
+export class APIError extends Error {
+  constructor(statusCode, message) {
+    super(message);
+
+    this.statusCode = statusCode;
+  }
 }

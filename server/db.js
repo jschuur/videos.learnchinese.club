@@ -1,14 +1,19 @@
 import mongoose from 'mongoose';
 
-(async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-  } catch (err) {
-    console.error(`Couldn't connect to database: ${err.message}`);
+import { APIError } from './util';
 
-    process.exit(1);
+let isConnected;
+
+export default async () => {
+  if (!isConnected) {
+    try {
+      let db = await mongoose.connect(process.env.MONGODB_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true });
+
+        isConnected = db.connections[0].readyState;
+      } catch(err) {
+        throw new APIError(500, `Couldn't connect to database (${err.message})`);
+      }
   }
-})();
+}

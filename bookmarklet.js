@@ -9,7 +9,7 @@ fetch('https://data.learnchinese.club/v1/channels', {
     return response.json();
   })
   .then((data) => {
-    window.alert(data.message);
+    window.alert(data.status);
   })
   .catch((error) => {
     window.alert('Error:' + error);

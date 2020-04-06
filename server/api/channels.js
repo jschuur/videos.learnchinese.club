@@ -1,45 +1,40 @@
 import parse from 'url-parse';
 
-import '../db';
+import dbConnect from '../db';
 
-import { buildHttpResponse } from '../util';
+import { buildHttpResponse, buildHttpError, APIError } from '../util';
 import { addNewChannel } from '../lib';
 
-function parseParameters(event) {
-  return new Promise((resolve, reject) => {
+async function parseParameters(event) {
+  const { url, secret } = JSON.parse(event.body);
 
-    const { url, secret } = JSON.parse(event.body);
-    if(secret != process.env.ADD_URL_SECRET) return reject(buildHttpResponse(401, 'Unauthorized access'));
-    if(!url) return reject(buildHttpResponse(400, 'Missing URL'));
+  if(secret != process.env.ADD_URL_SECRET) throw new APIError(401, 'Unauthorized access');
+  if(!url) throw new APIError(400, 'Missing URL');
 
-    const site = parse(decodeURIComponent(url), true);
-    if(!site) return reject(buildHttpResponse(400, 'Invalid URL'));
-    if(!site.hostname.match(/youtube.com$/)) return reject(buildHttpResponse(404, 'No valid YouTube URL detected'));
+  const site = parse(decodeURIComponent(url), true);
+  if(!site) throw new APIError(400, 'Invalid URL');
+  if(!site.hostname.match(/youtube.com$/)) throw new APIError(400, 'No valid YouTube URL detected');
 
-    var channelId, videoId;
-    var match = site.pathname.match(/\/channel\/([^\/]*)/);
-    if(match) {
-      channelId = match[1];
-    } else if(site.pathname == '/watch') {
-      videoId = site.query.v;
-    }
+  var match = site.pathname.match(/\/channel\/([^\/]*)/);
+  if(match) {
+    var channelId = match[1];
+  } else if(site.pathname == '/watch') {
+    var videoId = site.query.v;
+  }
 
-    resolve({ channelId, videoId });
-  });
+  return { channelId, videoId };
 }
 
 export async function post(event, context) {
-  return parseParameters(event)
-  .then(async ({ channelId, videoId }) => {
-    try {
-      let message = await addNewChannel({ channelId, videoId });
+  context.callbackWaitsForEmptyEventLoop = false;
 
-      return buildHttpResponse(200, message);
-    } catch(err) {
-      return buildHttpResponse(400, `Error adding new channel: ${err}`);
-    }
-  })
-  .catch(err => {
-    return err;
-  });
+  try {
+    await dbConnect();
+
+    const status = await addNewChannel(await parseParameters(event));
+
+    return buildHttpResponse({ status });
+  } catch(err) {
+    return buildHttpError(err);
+  }
 }

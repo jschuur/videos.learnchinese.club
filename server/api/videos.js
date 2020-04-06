@@ -1,22 +1,22 @@
-import mongoose from 'mongoose';
-
-import '../db';
+import dbConnect from '../db';
 
 import Video from '../models/Video';
-import { buildHttpResponse } from '../util';
+import { buildHttpResponse, buildHttpError } from '../util';
 
 export async function get(event, context) {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   try {
+    await dbConnect();
+
     const videos =  await Video
       .find({})
       .sort({ published_at: -1 })
       .limit(30)
       .exec();
 
-    mongoose.disconnect();
-
-    return buildHttpResponse(200, 'Success', { videos });
+    return buildHttpResponse({ videos });
   } catch (err) {
-    return buildHttpResponse(500, `Error: ${err.message}`);
+    return buildHttpError(err);
   }
 };

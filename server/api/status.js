@@ -1,20 +1,19 @@
-import mongoose from 'mongoose';
-
-import '../db';
+import dbConnect from '../db';
 import Video from '../models/Video';
 import Channel from '../models/Channel';
+import { buildHttpResponse, buildHttpError } from '../util';
 
 export async function handler(event, context) {
-  const videoCount = await Video.countDocuments();
-  const channelCount = await Channel.countDocuments();
+  context.callbackWaitsForEmptyEventLoop = false;
 
-  mongoose.disconnect();
+  try {
+    await dbConnect();
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      videos: videoCount,
-      channels: channelCount
-    })
-  };
+    const videoCount = await Video.countDocuments();
+    const channelCount = await Channel.countDocuments()
+
+    return buildHttpResponse({ videoCount, channelCount });
+  } catch(err) {
+    return buildHttpError(err);
+  }
 };

@@ -9,9 +9,11 @@ import {
   batchYouTubeRequest,
   buildYouTubeVideoLink,
   buildFeedUrl,
+  APIError,
   debug
 } from './util';
 
+// Remap some fields when importing from YouTube RSS feeds
 const parser = new Parser({
   customFields: {
     item: [['media:group', 'media'], ['yt:videoId', '_id']]
@@ -36,12 +38,16 @@ export async function getChannels({ skipUpdate } = {}) {
 }
 
 export async function getChannelsFromGoogleSheet() {
-  const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID);
-  doc.useApiKey(process.env.GOOGLE_API_KEY);
-  await doc.loadInfo();
+  try {
+    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID);
+    doc.useApiKey(process.env.GOOGLE_API_KEY);
+    await doc.loadInfo();
 
-  const sheet = doc.sheetsByIndex[0]; // or use doc.sheetsById[id]
-  var channels = await sheet.getRows();
+    const sheet = doc.sheetsByIndex[0]; // or use doc.sheetsById[id]
+    var channels = await sheet.getRows();
+  } catch(err) {
+    throw new APIError(500, `Couldn't access Google Sheet to import channels (${err.message})`)
+  }
 
   // Rename the id column, so we can use this array elsewhere
   channels = channels.map(channel => {
@@ -72,14 +78,15 @@ export async function getLatestVideosFromRSS(channels) {
   console.log(`Looking for recent uploads via RSS feeds for ${channels.length} channels`);
 
   const videos = (await Promise.all(channels.map(async channel => {
-    try {
-      debug(`Getting updates via RSS for ${channel.title}`);
-      let feed = await parser.parseURL(buildFeedUrl(channel.channel_id));
+    debug(`Getting updates via RSS for ${channel.title}`);
 
-      return feed.items.map(video => extractVideoDataRSS(video, channel.channel_id));
+    try {
+      var feed = await parser.parseURL(buildFeedUrl(channel.channel_id));
     } catch(err) {
-      console.error(`Unable to get data for ${channel.name}`);
+      console.warn(`Couldn't get channel uploads via RSS for ${channel.name} (${err.message})`);
     };
+
+    return feed.items.map(video => extractVideoDataRSS(video, channel.channel_id));
   }))).flat();
 
   console.log(`Found ${videos.length} videos in RSS feeds`);
@@ -119,27 +126,28 @@ export async function getLatestVideosFromAPI(channels, maxResults = 20) {
 
 export async function saveVideos(videos) {
   try {
-    let response = await Video.bulkWrite(videos.map(video => ({
+    var response = await Video.bulkWrite(videos.map(video => ({
       updateOne: {
         filter: {_id: video.video_id},
         update: video,
         upsert: true
       }
     })));
-
-    console.log(`${pluralize('new video', response.upsertedCount, true)} added`);
-
-    response.nUpserted && await updateVideos(Object.values(response.upsertedIds), { details: true });
-
-    return response;
   } catch (err) {
-    throw new Error(`Couldn't save videos to the database: ${err.message}`);
+    throw new APIError(500, `Couldn't save videos to database (${err.message})`);
   }
+
+  console.log(`${pluralize('new video', response.upsertedCount, true)} added`);
+
+  response.nUpserted && await updateVideoIds(Object.values(response.upsertedIds), { details: true });
+
+  return response;
 }
 
-export async function updateVideos(ids, { details }) {
+export async function updateVideoIds(ids, { details }) {
   console.log(`Updating ${ ids.length } videos (${details ? 'with' : 'without'} details)`);
 
+  // contentDetails like the duration are static and only to be updated once
   var part = `statistics,id${details ? ',contentDetails' : ''}`;
 
   // https://developers.google.com/youtube/v3/docs/videos/list
@@ -160,19 +168,14 @@ export async function updateVideos(ids, { details }) {
         upsert: true
       }
     })));
-
   } catch (err) {
-    console.error(`Couldn't update channel data to the database: ${err.message}`);
-
-    return;
+    throw new APIError(500, `Couldn't update channel data to database (${err.message})`);
   }
-
-  return;
 }
 
 export async function saveChannels(channels) {
   try {
-    let response = await Channel.bulkWrite(channels.map((channel)  => ({
+    var response = await Channel.bulkWrite(channels.map((channel)  => ({
       updateOne: {
         filter: { _id: channel._id },
         update: channel,
@@ -182,9 +185,7 @@ export async function saveChannels(channels) {
 
     console.log(`Saving new channels to database (${response.upsertedCount} added)`);
   } catch (err) {
-    console.error(`Couldn't write new channel data to the database: ${err.message}`);
-
-    return;
+    throw new APIError(500, `Couldn't write new channel data to the database (${err.message})`);
   }
 }
 
@@ -228,15 +229,15 @@ export async function updateChannelInfo(channels) {
           }
         };
       }));
-
-      console.log(`Saving channel updates to database (${response.nModified} modified, ${response.upsertedCount} added)`);
-
-      return response;
     } catch (err) {
-      throw new Error(`Couldn't update channel data to the database: ${err.message}`);
+      throw new APIError(500, `Couldn't update channel data to database (${err.message})`);
     }
+
+    console.log(`Saving channel updates to database (${response.nModified} modified, ${response.upsertedCount} added)`);
+
+    return response;
   } else {
-    throw new Error('YouTube API returned no channel info');
+    throw new APIError(400, 'YouTube API returned no channel info');
   }
 }
 
@@ -249,28 +250,29 @@ async function addChannelByChannelId(channelId) {
   });
 
   if(item) {
+    let channel = extractChannelData(item);
+    let { title } = channel;
+
     try {
-      let channel = extractChannelData(item);
-      let response = await Channel.updateOne(
+      var response = await Channel.updateOne(
         { channel_id: channelId },
         { _id: channelId, ...channel},
         { upsert: true }
       );
-      let { title } = channel;
-
-      if(response.upserted) {
-        let videos = await getLatestVideosFromAPI([channel], 50);
-        let { nUpserted } = await saveVideos(videos);
-
-        return `YouTube channel ${ title } added and ${ pluralize('video', nUpserted, true) } imported`;
-      } else {
-        return `YouTube channel ${ title } is already tracked`;
-      }
     } catch(err) {
-      throw new Error(`Error saving new channel to database: ${ err.message }`);
+      throw new APIError(500, `Couldn't save new channel to database (${ err.message })`);
+    }
+
+    if(response.upserted) {
+      let videos = await getLatestVideosFromAPI([channel], 50);
+      let { nUpserted } = await saveVideos(videos);
+
+      return `YouTube channel ${ title } added and ${ pluralize('video', nUpserted, true) } imported`;
+    } else {
+      return `YouTube channel ${ title } is already tracked`;
     }
   } else {
-    throw new Error(`YouTube API returned no channel info for ${ channelId }`);
+    throw new APIError(400, `YouTube API returned no channel info for ${ channelId }`);
   };
 }
 
@@ -286,11 +288,11 @@ export async function addNewChannel({ videoId, channelId }) {
     if(video) {
       return addChannelByChannelId(video.snippet.channelId);
     } else {
-      throw new Error(`YouTube API returned no video info for ${ videoId }`);
+      throw new APIError(400, `YouTube API returned no video info for ${ videoId }`);
     }
   } else if(channelId) {
     return addChannelByChannelId(channelId);
   } else {
-    throw new Error('Did not specify channel or video ID');
+    throw new APIError(400, 'Did not specify channel or video ID');
   }
 }
