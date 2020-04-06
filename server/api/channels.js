@@ -17,7 +17,7 @@ function parseParameters(event) {
     if(!site.hostname.match(/youtube.com$/)) return reject(buildHttpResponse(404, 'No valid YouTube URL detected'));
 
     var channelId, videoId;
-    var match = site.pathname.match(/\/channel\/(.*)/);
+    var match = site.pathname.match(/\/channel\/([^\/]*)/);
     if(match) {
       channelId = match[1];
     } else if(site.pathname == '/watch') {
