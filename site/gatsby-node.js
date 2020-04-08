@@ -20,6 +20,9 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
             title
             link
             published_at
+            content_details {
+              duration
+            }
           }
         }
       }

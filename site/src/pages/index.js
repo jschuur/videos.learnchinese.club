@@ -38,6 +38,9 @@ export const query = graphql`
         title
         link
         published_at
+        content_details {
+          duration
+        }
       }
     }
   }

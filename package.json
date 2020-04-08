@@ -19,7 +19,11 @@
     "update:all": "npm run update:channels:both && npm run update:videos:both",
     "test": "babel-node -r dotenv/config test.js dotenv_config_path=.env.development"
   },
-  "keywords": ["chinese", "youtube", "language learning"],
+  "keywords": [
+    "chinese",
+    "youtube",
+    "language learning"
+  ],
   "author": "Joost Schuur <jschuur@jschuur.com>",
   "license": "ISC",
   "dependencies": {
@@ -32,7 +36,8 @@
     "pluralize": "^8.0.0",
     "rss-parser": "^3.7.6",
     "saslprep": "^1.0.3",
-    "url-parse": "^1.4.7"
+    "url-parse": "^1.4.7",
+    "youtube-duration-format": "^0.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
