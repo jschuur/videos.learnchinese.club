@@ -15,6 +15,7 @@ import {
   buildHttpError,
   APIError,
   debug,
+  parseAllInts
 } from './util';
 
 // Remap some fields when importing from YouTube RSS feeds
@@ -168,7 +169,7 @@ export async function updateVideoIds(ids, { details }) {
       updateOne: {
         filter: { _id: video.id },
         update: {
-          statistics: video.statistics,
+          statistics: parseAllInts(video.statistics),
           content_details: video.contentDetails
         },
         upsert: true
@@ -207,7 +208,7 @@ function extractChannelData(channel) {
     published_at: snippet.publishedAt,
     country: snippet.country,
     thumbnails: snippet.thumbnails,
-    statistics,
+    statistics: parseAllInts(statistics),
     uploads_playlist_id: contentDetails.relatedPlaylists.uploads,
   };
 }
@@ -308,7 +309,7 @@ export async function searchModelAPI(model, params) {
   try {
     await dbConnect();
 
-    // querystring needs to be converted into a format that aqp can handle
+    // querystring needs to be converted into a format that api-query-params can handle
     const queryString = params ? Object.entries(params).map(([param, value]) => {
       return `${encodeURIComponent(param)}${value && `=${encodeURIComponent(value)}`}`;
     }).join('&') : {};
@@ -331,6 +332,7 @@ export async function searchModelAPI(model, params) {
       .populate(population)
       .exec();
 
+    // Let's go nuts and hit the database again!
     var response = {
       totalCount: await model.countDocuments({}),
       matchingCount: await model.countDocuments(filter),

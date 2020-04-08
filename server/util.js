@@ -110,3 +110,19 @@ export class APIError extends Error {
     this.statusCode = statusCode;
   }
 }
+
+export function parseAllInts(data) {
+  Object.keys(data).forEach(key => {
+    let value = data[key];
+
+    if (typeof value === 'object') {
+      return parseAllInts(value);
+    }
+
+    if(typeof value === 'string' && !isNaN(value)) {
+      data[key] = parseInt(value);
+    }
+  });
+
+  return data;
+}

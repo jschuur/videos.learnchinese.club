@@ -1,3 +1,5 @@
+org: jschuur
+app: videos-learnchinese-club
 service: videos-learnchinese-club
 
 plugins:
