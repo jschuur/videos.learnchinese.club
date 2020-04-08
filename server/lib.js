@@ -59,7 +59,7 @@ export async function getChannelsFromGoogleSheet() {
   // Rename the id column, so we can use this array elsewhere
   channels = channels.map(channel => {
     let { id: _id, ...data } = channel;
-    return { _id, channel_id: _id, ...data };
+    return { _id, channelId: _id, ...data };
   });
 
   console.log(`Found ${channels.length} channels in Google sheet`);
@@ -69,14 +69,14 @@ export async function getChannelsFromGoogleSheet() {
 
 function extractVideoDataRSS(video, channelId) {
   return {
-    video_id: video._id,
-    channel_id: channelId,
-    published_at: video.pubDate,
+    videoId: video._id,
+    channelId,
+    pubDate: video.pubDate,
 
     title: video.media['media:title'][0],
     link: buildYouTubeVideoLink(video._id),
     description: video.media['media:description'][0],
-    author: video.author
+    channelAuthor: video.author
   };
 }
 
@@ -88,12 +88,12 @@ export async function getLatestVideosFromRSS(channels) {
     debug(`Getting updates via RSS for ${channel.title}`);
 
     try {
-      var feed = await parser.parseURL(buildFeedUrl(channel.channel_id));
+      var feed = await parser.parseURL(buildFeedUrl(channel.channelId));
     } catch(err) {
       console.warn(`Couldn't get channel uploads via RSS for ${channel.name} (${err.message})`);
     };
 
-    return feed.items.map(video => extractVideoDataRSS(video, channel.channel_id));
+    return feed.items.map(video => extractVideoDataRSS(video, channel.channelId));
   }))).flat();
 
   console.log(`Found ${videos.length} videos in RSS feeds`);
@@ -103,9 +103,9 @@ export async function getLatestVideosFromRSS(channels) {
 
 function extractVideoDataAPI({ snippet }) {
   return {
-    video_id: snippet.resourceId.videoId,
-    channel_id: snippet.channelId,
-    published_at: snippet.publishedAt,
+    videoId: snippet.resourceId.videoId,
+    channelId: snippet.channelId,
+    pubDate: snippet.publishedAt,
 
     title: snippet.title,
     link: buildYouTubeVideoLink(snippet.resourceId.videoId),
@@ -122,7 +122,7 @@ export async function getLatestVideosFromAPI(channels, maxResults = 20) {
   const response = await batchYouTubeRequest({
     endpoint: 'playlistItems.list',
     part: 'snippet',
-    playlistIds: channels.map(c => c.uploads_playlist_id),
+    playlistIds: channels.map(c => c.uploadsPlaylistId),
     maxResults
   });
 
@@ -135,7 +135,7 @@ export async function saveVideos(videos) {
   try {
     var response = await Video.bulkWrite(videos.map(video => ({
       updateOne: {
-        filter: {_id: video.video_id},
+        filter: {_id: video.videoId},
         update: video,
         upsert: true
       }
@@ -170,7 +170,7 @@ export async function updateVideoIds(ids, { details }) {
         filter: { _id: video.id },
         update: {
           statistics: parseAllInts(video.statistics),
-          content_details: video.contentDetails
+          contentDetails: video.contentDetails
         },
         upsert: true
       }
@@ -201,15 +201,15 @@ function extractChannelData(channel) {
   var { snippet, contentDetails, statistics } = channel;
 
   return {
-    channel_id: channel.id,
+    channelId: channel.id,
     title: snippet.title,
     description: snippet.description,
     customURL: snippet.customUrl,
-    published_at: snippet.publishedAt,
+    pubDate: snippet.publishedAt,
     country: snippet.country,
     thumbnails: snippet.thumbnails,
     statistics: parseAllInts(statistics),
-    uploads_playlist_id: contentDetails.relatedPlaylists.uploads,
+    uploadsPlaylistId: contentDetails.relatedPlaylists.uploads,
   };
 }
 
@@ -220,7 +220,7 @@ export async function updateChannelInfo(channels) {
   var response = await batchYouTubeRequest({
     endpoint: 'channels.list',
     part: 'snippet,statistics,contentDetails',
-    ids: channels.map(c => c.channel_id)
+    ids: channels.map(c => c.channelId)
   });
 
   if(response?.length) {
@@ -230,7 +230,7 @@ export async function updateChannelInfo(channels) {
 
         return {
           updateOne: {
-            filter: { _id: data.channel_id },
+            filter: { _id: data.channelId },
             update: data,
             upsert: true
           }
@@ -262,7 +262,7 @@ async function addChannelByChannelId(channelId) {
 
     try {
       var response = await Channel.updateOne(
-        { channel_id: channelId },
+        { channelId },
         { _id: channelId, ...channel},
         { upsert: true }
       );
@@ -321,7 +321,7 @@ export async function searchModelAPI(model, params) {
       response.notice = `Max result size hit. Only returning first ${MAX_API_SEARCH_LIMIT} matches (use skip parameter to paginate).`;
     }
     if(!sort) {
-      sort = { published_at: -1 };
+      sort = { pubDate: -1 };
     }
 
     let result = await model.find(filter)

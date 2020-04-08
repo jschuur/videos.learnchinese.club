@@ -6,7 +6,7 @@ import Footer from './Footer';
 
 const Header = styled.h1`
   text-align: center;
-  font-size: 3rem;
+  font-size: 2.1rem;
 
   a {
     color: black;

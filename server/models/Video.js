@@ -5,13 +5,13 @@ export default mongoose.model('Video', new Schema({
   _id: String,
   title: String,
   link: String,
-  author: String,
-  channel_id: String,
-  video_id: String,
+  channelTitle: String,
+  channelId: String,
+  videoId: String,
   description: String,
   statistics: Schema.Types.Mixed,
-  content_details: Schema.Types.Mixed,
-  published_at: Date,
+  contentDetails: Schema.Types.Mixed,
+  pubDate: Date,
   isDeleted: Boolean
 }, {
   versionKey: false

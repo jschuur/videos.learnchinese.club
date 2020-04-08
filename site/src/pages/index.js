@@ -24,18 +24,18 @@ export const query = graphql`
       }
       limit: 30
       sort: {
-        fields: [published_at]
+        fields: [pubDate]
         order: DESC
       }
     ) {
       nodes {
         id
-        video_id
-        author
+        videoId
+        channelTitle
         title
         link
-        published_at
-        content_details {
+        pubDate
+        contentDetails {
           duration
         }
       }

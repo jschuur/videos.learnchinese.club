@@ -81,7 +81,7 @@ export function getVideoThumbnail(videoId, resolution) {
   };
 }
 
-export const buildFeedUrl = (channel_id) => `https://www.youtube.com/feeds/videos.xml?channel_id=${channel_id}`;
+export const buildFeedUrl = (channelId) => `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
 
 export function buildHttpResponse({ statusCode = 200, status = 'Success', ...data }) {
   return {

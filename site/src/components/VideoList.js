@@ -15,7 +15,7 @@ export default function VideoList({ videos }) {
       { videos.length ?
         <VideoGrid>
           { videos.map(video =>
-            (<VideoItem video={ video } key={video.video_id} />)
+            (<VideoItem video={ video } key={video.videoId} />)
           )}
         </VideoGrid>
         : 'Loading'

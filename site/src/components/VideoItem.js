@@ -21,7 +21,7 @@ const Age = styled(TimeAgo)`
   font-size: 0.8rem;
 `;
 
-const Author = styled.div`
+const ChannelTitle = styled.div`
   font-size: 0.9rem;
 `;
 const Thumbnail = styled.img`
@@ -44,20 +44,20 @@ const VideoDuration = styled.span`
   }
 `;
 
-export default function VideoItem({ video: { video_id, title, link, author, published_at, content_details }}) {
-  var thumbnail = getVideoThumbnail(video_id, 'medium');
+export default function VideoItem({ video: { videoId, title, link, channelTitle, pubDate, contentDetails }}) {
+  var thumbnail = getVideoThumbnail(videoId, 'medium');
 
   return (
     <VideoCard>
-      <Author>{ author }</Author>
+      <ChannelTitle>{ channelTitle }</ChannelTitle>
       <a href={ link }>
         <Thumbnail src={ thumbnail.url } width={ thumbnail.width } height={ thumbnail.height } alt={ title }/>
       </a>
       <Title>
         { title }
-        <VideoDuration>{ ytDurationFormat(content_details.duration) }</VideoDuration>
+        <VideoDuration>{ ytDurationFormat(contentDetails.duration) }</VideoDuration>
       </Title>
-      <Age date={ published_at } />
+      <Age date={ pubDate } />
     </VideoCard>
   )
 }
