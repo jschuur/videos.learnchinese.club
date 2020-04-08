@@ -17,6 +17,7 @@ const Container = styled.div`
 export default ({ children }) => {
   return (
     <Container>
+      <Header>好好学习天天向上</Header>
       { children }
 
       <Footer />

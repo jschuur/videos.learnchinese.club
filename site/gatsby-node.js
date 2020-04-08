@@ -7,7 +7,6 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
     `
       query VideoArchiveQuery {
         allMongodbChineseyoutubeVideos(
-          limit: 300
           sort: {
             fields: [published_at]
             order: DESC
@@ -38,10 +37,14 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
   const numPages = Math.ceil(videos.length / videosPerPage)
 
   Array.from({ length: numPages }).forEach((_, i) => {
+    let start = i * videosPerPage;
+    let end = i * videosPerPage + videosPerPage;
+
     createPage({
       path: i === 0 ? `/archive` : `/archive/${i + 1}`,
       component: path.resolve("./src/templates/video-archive-template.js"),
       context: {
+        videos: videos.slice(start, end),
         limit: videosPerPage,
         skip: i * videosPerPage,
         numPages,
