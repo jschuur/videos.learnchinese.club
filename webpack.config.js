@@ -16,7 +16,8 @@ module.exports = {
       'saslprep'
     ],
     modules: false,
-    entrypoints: false
+    entrypoints: false,
+    colors: true
   },
   plugins: [
     new ContextReplacementPlugin(/.*/)

@@ -3,7 +3,15 @@ import parse from 'url-parse';
 import dbConnect from '../db';
 
 import { buildHttpResponse, buildHttpError, APIError } from '../util';
-import { addNewChannel } from '../lib';
+import { addNewChannel, searchModelAPI } from '../lib';
+
+import Channel from '../models/Channel';
+
+export async function get(event, context) {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  return searchModelAPI(Channel, event.queryStringParameters);
+}
 
 async function parseParameters(event) {
   const { url, secret } = JSON.parse(event.body);

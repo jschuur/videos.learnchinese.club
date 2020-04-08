@@ -1,16 +1,20 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import pluralize from 'pluralize';
+import aqp from 'api-query-params';
 import Parser from 'rss-parser';
 
 import Video from './models/Video';
 import Channel from './models/Channel';
 
+import dbConnect from './db';
 import {
   batchYouTubeRequest,
   buildYouTubeVideoLink,
   buildFeedUrl,
+  buildHttpResponse,
+  buildHttpError,
   APIError,
-  debug
+  debug,
 } from './util';
 
 // Remap some fields when importing from YouTube RSS feeds
@@ -19,6 +23,8 @@ const parser = new Parser({
     item: [['media:group', 'media'], ['yt:videoId', '_id']]
   }
 });
+
+const MAX_API_SEARCH_LIMIT = 100;
 
 export async function getChannels({ skipUpdate } = {}) {
   var channels = await Channel.find({}).exec();
@@ -294,5 +300,52 @@ export async function addNewChannel({ videoId, channelId }) {
     return addChannelByChannelId(channelId);
   } else {
     throw new APIError(400, 'Did not specify channel or video ID');
+  }
+}
+
+// wrapper function for a GET API endpoint for channels, videos that handles search
+export async function searchModelAPI(model, params) {
+  try {
+    await dbConnect();
+
+    // querystring needs to be converted into a format that aqp can handle
+    const queryString = params ? Object.entries(params).map(([param, value]) => {
+      return `${encodeURIComponent(param)}${value && `=${encodeURIComponent(value)}`}`;
+    }).join('&') : {};
+    var { filter, skip, limit=10, sort, projection, population } = aqp(queryString);
+
+    // sensible defaults
+    if(limit > MAX_API_SEARCH_LIMIT) {
+      limit = MAX_API_SEARCH_LIMIT;
+      response.notice = `Max result size hit. Only returning first ${MAX_API_SEARCH_LIMIT} matches (use skip parameter to paginate).`;
+    }
+    if(!sort) {
+      sort = { published_at: -1 };
+    }
+
+    let result = await model.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort(sort)
+      .select(projection)
+      .populate(population)
+      .exec();
+
+    var response = {
+      totalCount: await model.countDocuments({}),
+      matchingCount: await model.countDocuments(filter),
+      ...(skip && { skip }),
+      ...(limit && { limit })
+    }
+
+    if(result?.length) {
+      response[pluralize(model.modelName).toLowerCase()] = result;
+    } else {
+      response = { ...response, statusCode: 404, status: 'No results found for the specified criteria' };
+    }
+
+    return buildHttpResponse(response);
+  } catch (err) {
+    return buildHttpError(err);
   }
 }

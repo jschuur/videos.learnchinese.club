@@ -2,6 +2,7 @@
   "name": "videos.learnchinese.club",
   "version": "0.0.5",
   "description": "Lists recent YouTube videos for Chinese language learning",
+  "homepage": "https://videos.learnchinese.club",
   "scripts": {
     "dev:site": "npm run dev --prefix site",
     "dev:server": "serverless offline start --watch --printOutput",
@@ -18,10 +19,11 @@
     "update:all": "npm run update:channels:both && npm run update:videos:both",
     "test": "babel-node -r dotenv/config test.js dotenv_config_path=.env.development"
   },
-  "keywords": [],
+  "keywords": ["chinese", "youtube", "language learning"],
   "author": "Joost Schuur <jschuur@jschuur.com>",
   "license": "ISC",
   "dependencies": {
+    "api-query-params": "^4.15.0",
     "chalk": "^4.0.0",
     "google-spreadsheet": "^3.0.10",
     "googleapis": "^48.0.0",

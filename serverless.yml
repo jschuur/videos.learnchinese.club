@@ -1,7 +1,6 @@
 service: videos-learnchinese-club
 
 plugins:
-  # - serverless-bundle
   - serverless-webpack
   - serverless-dotenv-plugin
   - serverless-offline-dotenv
@@ -37,7 +36,7 @@ provider:
   runtime: nodejs12.x
 
 functions:
-  videos:
+  getVideos:
     handler: server/api/videos.get
     events:
       - http:
@@ -45,7 +44,15 @@ functions:
           method: get
           cors: true
 
-  channels:
+  getChannels:
+    handler: server/api/channels.get
+    events:
+      - http:
+          path: channels
+          method: get
+          cors: true
+
+  addChannel:
     handler: server/api/channels.post
     events:
       - http:

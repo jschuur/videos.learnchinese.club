@@ -1,7 +1,8 @@
 import dbConnect from '../db';
+import { buildHttpResponse, buildHttpError } from '../util';
+
 import Video from '../models/Video';
 import Channel from '../models/Channel';
-import { buildHttpResponse, buildHttpError } from '../util';
 
 export async function handler(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;

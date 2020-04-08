@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+import dbConnect from './db';
 import {
   getChannels,
   getLatestVideosFromRSS,
@@ -8,7 +9,6 @@ import {
 } from './lib';
 import { buildHttpResponse, buildHttpError } from './util';
 
-import dbConnect from './db';
 
 export async function videos(event, context) {
   console.log(`Searching for updated videos...`);
