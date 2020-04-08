@@ -1,10 +1,17 @@
 import React from "react"
 import styled from 'styled-components';
+import { Link } from "gatsby"
 
 import Footer from './Footer';
 
 const Header = styled.h1`
   text-align: center;
+  font-size: 3rem;
+
+  a {
+    color: black;
+    text-decoration: none;
+  }
 `;
 
 const Container = styled.div`
@@ -17,7 +24,7 @@ const Container = styled.div`
 export default ({ children }) => {
   return (
     <Container>
-      <Header>好好学习天天向上</Header>
+      <Header><Link to="/">好好学习天天向上</Link></Header>
       { children }
 
       <Footer />
