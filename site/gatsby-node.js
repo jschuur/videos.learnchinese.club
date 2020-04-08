@@ -7,6 +7,9 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
     `
       query VideoArchiveQuery {
         allMongodbChineseyoutubeVideos(
+          filter: {
+            isDeleted: {ne: true}
+          }
           sort: {
             fields: [published_at]
             order: DESC
