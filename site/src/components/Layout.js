@@ -3,6 +3,10 @@ import styled from 'styled-components';
 
 import Footer from './Footer';
 
+const Header = styled.h1`
+  text-align: center;
+`;
+
 const Container = styled.div`
   font-family: Arial, Helvetica, sans-serif;
   width: 80%;

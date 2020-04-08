@@ -3,7 +3,6 @@ import { useStaticQuery, graphql } from "gatsby"
 import styled from 'styled-components';
 
 const Footer = styled.footer`
-  margin-top: 40px;
   font-size: 0.8rem;
   color: grey;
   text-align: center;
