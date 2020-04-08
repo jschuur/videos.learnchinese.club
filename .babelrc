@@ -1,12 +1,21 @@
 {
   "presets": [
-    [
-      "@babel/preset-env",
-      {
-        "targets": {
-          "node": true
-        }
+    ["@babel/preset-env", {
+      "targets": {
+        "node": true
       }
-    ]
+    }]
+  ],
+  "plugins": [
+    ["module-resolver", {
+      "root": ["./server"],
+      "alias": {
+        "/lib": "./server/lib",
+        "/db": "./server/db",
+        "/api": "./server/api",
+        "/util": "./server/util",
+        "/models": "./server/models",
+      }
+    }]
   ]
 }

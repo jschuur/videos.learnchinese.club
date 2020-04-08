@@ -1,13 +1,13 @@
 import mongoose from 'mongoose';
 
-import dbConnect from './db';
+import dbConnect from '/db';
 import {
   getChannels,
   getLatestVideosFromRSS,
   saveVideos,
   updateChannelInfo
-} from './lib';
-import { buildHttpResponse, buildHttpError } from './util';
+} from '/lib';
+import { buildHttpResponse, buildHttpError } from '/util';
 
 
 export async function videos(event, context) {

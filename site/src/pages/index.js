@@ -1,5 +1,6 @@
 import { graphql } from 'gatsby'
 import React from 'react';
+import Helmet from 'react-helmet';
 
 import Layout from '../components/Layout';
 import VideoList from '../components/VideoList';
@@ -10,6 +11,9 @@ export default ({data}) => {
 
   return (
     <Layout>
+      <Helmet>
+          <title>Learn Chinese Club Videos</title>
+      </Helmet>
       <VideoList videos={ videos } />
       <Pagination page={ 1 } />
     </Layout>

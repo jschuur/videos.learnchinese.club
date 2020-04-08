@@ -1,11 +1,11 @@
 import parse from 'url-parse';
 
-import dbConnect from '../db';
+import dbConnect from '/db';
 
-import { buildHttpResponse, buildHttpError, APIError } from '../util';
-import { addNewChannel, searchModelAPI } from '../lib';
+import { buildHttpResponse, buildHttpError, APIError } from '/util';
+import { addNewChannel, searchModelAPI } from '/lib';
 
-import Channel from '../models/Channel';
+import Channel from '/models/Channel';
 
 export async function get(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;

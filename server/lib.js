@@ -3,10 +3,10 @@ import pluralize from 'pluralize';
 import aqp from 'api-query-params';
 import Parser from 'rss-parser';
 
-import Video from './models/Video';
-import Channel from './models/Channel';
+import Video from '/models/Video';
+import Channel from '/models/Channel';
 
-import dbConnect from './db';
+import dbConnect from '/db';
 import {
   batchYouTubeRequest,
   buildYouTubeVideoLink,
@@ -16,7 +16,7 @@ import {
   APIError,
   debug,
   parseAllInts
-} from './util';
+} from '/util';
 
 // Remap some fields when importing from YouTube RSS feeds
 const parser = new Parser({
@@ -76,7 +76,7 @@ function extractVideoDataRSS(video, channelId) {
     title: video.media['media:title'][0],
     link: buildYouTubeVideoLink(video._id),
     description: video.media['media:description'][0],
-    channelAuthor: video.author
+    channelTitle: video.author
   };
 }
 
@@ -110,7 +110,7 @@ function extractVideoDataAPI({ snippet }) {
     title: snippet.title,
     link: buildYouTubeVideoLink(snippet.resourceId.videoId),
     description: snippet.description,
-    author: snippet.channelTitle
+    channelTitle: snippet.channelTitle
   };
 }
 
