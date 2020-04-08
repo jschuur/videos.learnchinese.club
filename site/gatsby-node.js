@@ -1,6 +1,17 @@
 const path = require("path")
 const { createFilePath } = require("gatsby-source-filesystem")
 
+// teach GraphQL that even if no video is marked as deleted, it is a Boolean
+exports.sourceNodes = ({ actions }) => {
+  const { createTypes } = actions;
+  const typeDefs = `
+    type mongodbChineseyoutubeVideos implements Node {
+      isDeleted: Boolean
+    }
+  `;
+  createTypes(typeDefs);
+}
+
 exports.createPages = async ({ graphql, actions, reporter }) => {
   const { createPage } = actions
   const result = await graphql(
