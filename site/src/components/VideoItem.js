@@ -31,33 +31,43 @@ const Thumbnail = styled.img`
 const Title = styled.div`
   font-weight: bold;
   margin-bottom: 5px;
+  line-height: 1.5em;
 `;
 
 const VideoDuration = styled.span`
   color: silver;
   font-weight: normal;
   &&::before {
-    content: " ("
+    content: ' (';
   }
   &&::after {
-    content: ")"
+    content: ')';
   }
 `;
 
-export default function VideoItem({ video: { videoId, title, link, channelTitle, pubDate, contentDetails }}) {
+export default function VideoItem({
+  video: { videoId, title, link, channelTitle, pubDate, contentDetails }
+}) {
   var thumbnail = getVideoThumbnail(videoId, 'medium');
 
   return (
     <VideoCard>
-      <ChannelTitle>{ channelTitle }</ChannelTitle>
-      <a href={ link }>
-        <Thumbnail src={ thumbnail.url } width={ thumbnail.width } height={ thumbnail.height } alt={ title }/>
+      <ChannelTitle>{channelTitle}</ChannelTitle>
+      <a href={link}>
+        <Thumbnail
+          src={thumbnail.url}
+          width={thumbnail.width}
+          height={thumbnail.height}
+          alt={title}
+        />
       </a>
       <Title>
-        { title }
-        <VideoDuration>{ ytDurationFormat(contentDetails.duration) }</VideoDuration>
+        {title.trim()}
+        <VideoDuration>
+          {ytDurationFormat(contentDetails.duration)}
+        </VideoDuration>
       </Title>
-      <Age date={ pubDate } />
+      <Age date={pubDate} />
     </VideoCard>
-  )
+  );
 }
