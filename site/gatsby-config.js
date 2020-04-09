@@ -1,16 +1,17 @@
-require("dotenv").config({
-  path: `../.env.${process.env.NODE_ENV}`,
+require('dotenv').config({
+  path: `../.env.${process.env.NODE_ENV}`
 });
 
 // https://stackoverflow.com/questions/54089978/stuck-trying-to-fetch-data-from-mongodb-into-gatsby-using-gatsby-source-mongodb
-var mongoDBExtraParams = process.env.NODE_ENV == 'production' ?
-  {
-    retryWrites: true,
-    ssl: true,
-    authSource: 'admin',
-    replicaSet: process.env.MONGODB_REPLICASET
-  }
-  : undefined;
+var mongoDBExtraParams =
+  process.env.NODE_ENV == 'production'
+    ? {
+        retryWrites: true,
+        ssl: true,
+        authSource: 'admin',
+        replicaSet: process.env.MONGODB_REPLICASET
+      }
+    : undefined;
 
 module.exports = {
   siteMetadata: {
@@ -20,17 +21,18 @@ module.exports = {
   },
   plugins: [
     {
-      resolve: 'gatsby-plugin-google-analytics',
+      resolve: `gatsby-plugin-gtag`,
       options: {
-        trackingId: '107202787-3',
-        head: false
-      },
+        trackingId: `UA-107202787-3`,
+        head: false,
+        anonymize: true
+      }
     },
     {
-        resolve: `gatsby-plugin-s3`,
-        options: {
-            bucketName: 'club.learnchinese.videos'
-        },
+      resolve: `gatsby-plugin-s3`,
+      options: {
+        bucketName: 'club.learnchinese.videos'
+      }
     },
     {
       resolve: 'gatsby-source-mongodb',
@@ -49,4 +51,4 @@ module.exports = {
       }
     }
   ]
-}
+};
