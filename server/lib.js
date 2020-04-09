@@ -59,6 +59,12 @@ export async function getChannelsFromGoogleSheet() {
   // Rename the id column, so we can use this array elsewhere
   channels = channels.map(channel => {
     let { id: _id, ...data } = channel;
+
+    // Remove blank fields from the spreadsheet
+    for (var key in data) {
+      !data[key] && delete data[key];
+    }
+
     return { _id, channelId: _id, ...data };
   });
 
