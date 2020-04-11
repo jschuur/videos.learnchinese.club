@@ -1,25 +1,45 @@
 name: Redeploy Gatsby site
 
 on:
+  schedule:
+    - cron: '*/30 * * * *'
   push:
     branches:
-    - production
+      - production
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  MONGODB_URL: ${{ secrets.MONGODB_URL }}
+  MONGODB_HOST: ${{ secrets.MONGODB_HOST }}
+  MONGODB_USER: ${{ secrets.MONGODB_USER }}
+  MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
+  MONGODB_DATABASE: ${{ secrets.MONGODB_DATABASE }}
+  MONGODB_REPLICASET: ${{ secrets.MONGODB_REPLICASET }}
 
 jobs:
-  redeploy-gatsby:
-    name: Redeploy Gatsby site
+  rebuild:
+    name: Rebuild Gatsby Site
     runs-on: ubuntu-latest
     steps:
-      - name: ssh to instance and run commands
-        uses: appleboy/ssh-action@master
+      - name: Checkout
+        uses: actions/checkout@v2
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          script: |
-            cd videos.learnchinese.club/site
-            git reset --hard HEAD
-            git pull
-            npm install
-            npm run build
-            npm run deploy
+          ref: 'production'
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: site
+
+      - name: Build site
+        run: npm run build
+        working-directory: site
+
+      - name: Deploy site
+        run: npm run deploy
+        working-directory: site
