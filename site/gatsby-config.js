@@ -6,11 +6,11 @@ require('dotenv').config({
 var mongoDBExtraParams =
   process.env.NODE_ENV == 'production'
     ? {
-        retryWrites: true,
-        ssl: true,
-        authSource: 'admin',
-        replicaSet: process.env.MONGODB_REPLICASET,
-      }
+      retryWrites: true,
+      ssl: true,
+      authSource: 'admin',
+      replicaSet: process.env.MONGODB_REPLICASET,
+    }
     : undefined;
 
 module.exports = {
@@ -34,15 +34,14 @@ module.exports = {
         collection: ['videos', 'channels'],
         server: {
           address: process.env.MONGODB_HOST,
-          port: 27017
+          port: 27017,
         },
         auth: {
           user: process.env.MONGODB_USER,
-          password: process.env.MONGODB_PASSWORD
+          password: process.env.MONGODB_PASSWORD,
         },
-        extraParams: mongoDBExtraParams
-      }
-    }
+        extraParams: mongoDBExtraParams,
+      },
+    },
   ]
-  ],
 };
