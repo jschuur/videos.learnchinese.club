@@ -37,12 +37,6 @@ const Title = styled.div`
 const VideoDuration = styled.span`
   color: silver;
   font-weight: normal;
-  &&::before {
-    content: ' (';
-  }
-  &&::after {
-    content: ')';
-  }
 `;
 
 export default function VideoItem({
@@ -63,9 +57,7 @@ export default function VideoItem({
       </a>
       <Title>
         {title.trim()}
-        <VideoDuration>
-          {ytDurationFormat(contentDetails.duration)}
-        </VideoDuration>
+        <VideoDuration>{contentDetails?.duration && ` (${ytDurationFormat(contentDetails.duration)})`}</VideoDuration>
       </Title>
       <Age date={pubDate} />
     </VideoCard>
