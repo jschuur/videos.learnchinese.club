@@ -1,6 +1,9 @@
 import path from 'path';
+
 import { createFilePath } from 'gatsby-source-filesystem';
 import { populateChannelInfo } from './src/util';
+
+import { VIDEOS_PER_PAGE } from './src/config';
 
 // teach GraphQL that even if no video is marked as deleted, it is a Boolean
 exports.sourceNodes = ({ actions }) => {
@@ -33,6 +36,7 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
               duration
             }
           }
+          totalCount
         }
 
         channels: allMongodbChineseyoutubeChannels {
@@ -51,21 +55,19 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
 
   const channels = result.data.channels.nodes;
   const videos = populateChannelInfo(result.data.videos.nodes, channels, ['shortTitle']);
-
-  const videosPerPage = 30;
-  const numPages = Math.ceil(videos.length / videosPerPage);
+  const numPages = Math.ceil(result.data.videos.totalCount / VIDEOS_PER_PAGE);
 
   Array.from({ length: numPages }).forEach((_, i) => {
-    let start = i * videosPerPage;
-    let end = i * videosPerPage + videosPerPage;
+    let start = i * VIDEOS_PER_PAGE;
+    let end = i * VIDEOS_PER_PAGE + VIDEOS_PER_PAGE;
 
     createPage({
       path: i === 0 ? `/page` : `/page/${i + 1}`,
       component: path.resolve('./src/templates/video-archive-template.js'),
       context: {
         videos: videos.slice(start, end),
-        limit: videosPerPage,
-        skip: i * videosPerPage,
+        limit: VIDEOS_PER_PAGE,
+        skip: i * VIDEOS_PER_PAGE,
         numPages,
         currentPage: i + 1
       }

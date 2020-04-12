@@ -7,6 +7,8 @@ import Layout from '../components/Layout';
 import VideoList from '../components/VideoList';
 import Pagination from '../components/Pagination';
 
+import { VIDEOS_PER_PAGE } from '../config';
+
 export default ({ data }) => {
   const channels = data.channels.nodes;
   const videos = populateChannelInfo(data.videos.nodes, channels, ['shortTitle']);
@@ -14,7 +16,7 @@ export default ({ data }) => {
   return (
     <Layout>
       <VideoList videos={videos} />
-      <Pagination page={1} />
+      <Pagination page={1} numPages={ Math.ceil(data.videos.totalCount / VIDEOS_PER_PAGE) } />
     </Layout>
   );
 };
@@ -37,6 +39,7 @@ export const query = graphql`
           duration
         }
       }
+      totalCount
     }
 
     channels: allMongodbChineseyoutubeChannels {

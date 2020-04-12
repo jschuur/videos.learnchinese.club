@@ -34,18 +34,16 @@ const PaginationWrapper = styled.div`
   margin: 20px 0 30px 0;
 `;
 
-const MAX_PAGES = 10;
-
-export default function Pagination({ page }) {
+export default function Pagination({ page, numPages }) {
+  console.log(`numPages: ${numPages} (${page})`);
   if (page > 1) {
     var newerLink = page === 2 ? '/' : `/page/${page - 1}`;
   }
 
-  if (page < MAX_PAGES) {
+  if (page < numPages) {
     var olderLink = `/page/${page + 1}`;
   }
 
-  // TODO: Improve button layout (and buttons)
   return (
     <PaginationWrapper>
       {newerLink ? (

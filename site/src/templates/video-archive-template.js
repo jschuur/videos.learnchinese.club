@@ -8,7 +8,7 @@ export default ({ data, pageContext }) => {
   return (
     <Layout>
         <VideoList videos={ pageContext.videos } />
-        <Pagination page={ pageContext.currentPage } />
+        <Pagination page={ pageContext.currentPage } numPages={ pageContext.numPages }/>
     </Layout>
   );
 }
