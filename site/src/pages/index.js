@@ -1,12 +1,15 @@
 import { graphql } from 'gatsby';
 import React from 'react';
 
+import { populateChannelInfo } from '../util';
+
 import Layout from '../components/Layout';
 import VideoList from '../components/VideoList';
 import Pagination from '../components/Pagination';
 
 export default ({ data }) => {
-  const { nodes: videos } = data.allMongodbChineseyoutubeVideos;
+  const channels = data.channels.nodes;
+  const videos = populateChannelInfo(data.videos.nodes, channels, ['shortTitle']);
 
   return (
     <Layout>
@@ -18,7 +21,7 @@ export default ({ data }) => {
 
 export const query = graphql`
   query RecentVideosQuery {
-    allMongodbChineseyoutubeVideos(
+    videos: allMongodbChineseyoutubeVideos(
       filter: { isDeleted: { ne: true } }
       limit: 30
       sort: { fields: [pubDate], order: DESC }
@@ -26,13 +29,20 @@ export const query = graphql`
       nodes {
         id
         videoId
-        channelTitle
+        channelId
         title
         link
         pubDate
         contentDetails {
           duration
         }
+      }
+    }
+
+    channels: allMongodbChineseyoutubeChannels {
+      nodes {
+        channelId
+        shortTitle
       }
     }
   }

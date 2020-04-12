@@ -46,13 +46,13 @@ const VideoDuration = styled.span`
 `;
 
 export default function VideoItem({
-  video: { videoId, title, link, channelTitle, pubDate, contentDetails }
+  video: { videoId, title, link, channel, pubDate, contentDetails }
 }) {
   var thumbnail = getVideoThumbnail(videoId, 'medium');
 
   return (
     <VideoCard>
-      <ChannelTitle>{channelTitle}</ChannelTitle>
+      <ChannelTitle>{channel?.shortTitle}</ChannelTitle>
       <a href={link}>
         <Thumbnail
           src={thumbnail.url}

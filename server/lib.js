@@ -264,12 +264,12 @@ async function addChannelByChannelId(channelId) {
 
   if(item) {
     let channel = extractChannelData(item);
-    let { title } = channel;
+    var { title } = channel;
 
     try {
       var response = await Channel.updateOne(
         { channelId },
-        { _id: channelId, ...channel},
+        { _id: channelId, shortTitle: channel.title, ...channel},
         { upsert: true }
       );
     } catch(err) {
@@ -280,7 +280,12 @@ async function addChannelByChannelId(channelId) {
       let videos = await getLatestVideosFromAPI([channel], 50);
       let { nUpserted } = await saveVideos(videos);
 
-      return `YouTube channel ${ title } added and ${ pluralize('video', nUpserted, true) } imported`;
+      let status = `YouTube channel ${ title } added and ${ pluralize('video', nUpserted, true) } imported`;
+      if(title?.length > 30) {
+        status = status + ', consider shortening long channel name';
+      }
+
+      return status;
     } else {
       return `YouTube channel ${ title } is already tracked`;
     }

@@ -5,6 +5,7 @@ export default mongoose.model('Channel', new Schema({
   _id: String,
   channelId: String,
   title: String,
+  shortTitle: String,
   description: String,
   customURL: String,
   pubDate: Date,

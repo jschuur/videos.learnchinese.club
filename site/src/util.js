@@ -15,3 +15,19 @@ export function getVideoThumbnail(videoId, resolution) {
     height
   };
 }
+
+// TODO: Use populate https://github.com/jschuur/videos.learnchinese.club/issues/19
+export function populateChannelInfo(videos, channels, fields) {
+  videos.forEach(video => {
+    let channel = channels.find(channel => channel.channelId === video.channelId);
+
+    if (channel) {
+      video.channel = {};
+      fields.forEach(field => video.channel[field] = channel[field]);
+    }
+
+    return video;
+  });
+
+  return videos;
+}
