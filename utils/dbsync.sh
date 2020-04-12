@@ -55,11 +55,11 @@ if [ -n "$ARG_IMPORT" ] ; then
 
   if [ -n "$ARG_CHANNELS" ] ; then
     echo 'Importing channels collection to local database'
-    mongoimport --host localhost --db $MONGODB_DATABASE --collection channels $ARG_DROP_COLLECTION --type JSON --file channels.json
+    mongoimport --host localhost --db $MONGODB_DATABASE --collection channels $ARG_DROP_COLLECTION --mode=upsert --type JSON --file channels.json
   fi
   if [ -n "$ARG_VIDEOS" ] ; then
     echo 'Importing videos collection to local database'
-    mongoimport --host localhost --db $MONGODB_DATABASE --collection videos $ARG_DROP_COLLECTION --type JSON --file videos.json
+    mongoimport --host localhost --db $MONGODB_DATABASE --collection videos $ARG_DROP_COLLECTION --mode=upsert --type JSON --file videos.json
   fi
 fi
 

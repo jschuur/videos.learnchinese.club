@@ -11,3 +11,4 @@ site/src/.env*
 test.js
 site/.netlify
 backups
+.netlify

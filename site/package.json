@@ -10,6 +10,7 @@
     "serve": "gatsby serve",
     "clean": "gatsby clean",
     "deploy": "netlify deploy --dir=public --prod --message='Scheduled update'",
+    "deploy:manual": "netlify deploy --dir=public --prod --message='Manual update'",
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1"
   },
   "dependencies": {
