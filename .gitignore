@@ -10,3 +10,4 @@ site/src/.env*
 !site/src/.env.sample
 test.js
 site/.netlify
+backups
