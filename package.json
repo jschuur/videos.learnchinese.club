@@ -17,6 +17,7 @@
     "update:channels:prod": "serverless invoke local -f update_channels --env production",
     "update:channels:both": "npm run update:channels && npm run update:channels:prod",
     "update:all": "npm run update:channels:both && npm run update:videos:both",
+    "rebuild:github": "npm run rebuild:github --prefix site",
     "test": "babel-node -r dotenv/config test.js dotenv_config_path=.env.development",
     "test:prod": "babel-node -r dotenv/config test.js dotenv_config_path=.env.production"
   },
@@ -29,6 +30,7 @@
   "license": "ISC",
   "dependencies": {
     "api-query-params": "^4.15.0",
+    "axios": "^0.19.2",
     "chalk": "^4.0.0",
     "google-spreadsheet": "^3.0.10",
     "googleapis": "^48.0.0",
