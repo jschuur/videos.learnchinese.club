@@ -26,6 +26,7 @@ const SEO = ({ title, description, image, article }) => {
 
   return (
     <Helmet title={pathname === '/' ? null : seo.title} titleTemplate={titleTemplate} defaultTitle={defaultTitle}>
+      <link rel="apple-touch-icon" href="/logo-apple-touch-icon.png"></link>
       <meta name="description" content={seo.description} />
       <meta name="image" content={seo.image} />
 

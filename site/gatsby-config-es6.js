@@ -36,6 +36,45 @@ module.exports = {
     },
     `gatsby-plugin-react-helmet`,
     {
+      resolve: `gatsby-plugin-manifest`,
+      options: {
+        name: SITE_TITLE,
+        short_name: '学习中文视频',
+        description: SITE_DESCRIPTION,
+        start_url: 'https://videos.learnchinese.club',
+        background_color: '#f7f0eb',
+        theme_color: '#a2466c',
+        display: 'standalone',
+        icons: [
+          {
+            src: '/images/logo-16x16.png',
+            sizes: '16x16',
+            type: 'image/png',
+          },
+          {
+            src: '/images/logo-32x32.png',
+            sizes: '32x32',
+            type: 'image/png',
+          },
+          {
+            src: '/favicon.io',
+            sizes: '48x48',
+            type: 'image/x-icon',
+          },
+          {
+            src: '/images/logo-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: '/images/logo-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+        ],
+      },
+    },
+    {
       resolve: 'gatsby-source-mongodb',
       options: {
         dbName: process.env.MONGODB_DATABASE,
