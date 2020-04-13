@@ -24,19 +24,14 @@ const SEO = ({ title, description, image, article }) => {
     url: `${siteUrl}${pathname}`,
   };
 
-  // Skip titleTemplate (via defaultTitle) for home page
-  if(pathname === '/') {
-    seo.title = null;
-  }
-
   return (
-    <Helmet title={seo.title} titleTemplate={titleTemplate} defaultTitle={defaultTitle}>
+    <Helmet title={pathname === '/' ? null : seo.title} titleTemplate={titleTemplate} defaultTitle={defaultTitle}>
       <meta name="description" content={seo.description} />
       <meta name="image" content={seo.image} />
 
       {seo.url && <meta property="og:url" content={seo.url} />}
 
-      {(article ? true : null) && <meta property="og:type" content="article" />}
+      <meta property="og:type" content="website" />
 
       {seo.title && <meta property="og:title" content={seo.title} />}
 
@@ -46,10 +41,10 @@ const SEO = ({ title, description, image, article }) => {
 
       {seo.image && <meta property="og:image" content={seo.image} />}
 
-      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:card" content="summary" />
 
       {twitterUsername && (
-        <meta name="twitter:creator" content={twitterUsername} />
+        <meta name="twitter:site" content={twitterUsername} />
       )}
 
       {seo.title && <meta name="twitter:title" content={seo.title} />}
