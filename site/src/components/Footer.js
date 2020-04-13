@@ -35,8 +35,8 @@ export default () => {
       <p>
         © {new Date().getFullYear()} by <a href="https://twitter.com/joostschuur">Joost Schuur</a> (<a href="https://twitter.com/LearnChineseCLB">@LearnChineseCLB</a>),
       built with <a href="https://www.gatsbyjs.org">Gatsby</a>, hosted on <a href="https://www.netlify.com/">Netlify</a>.
-      Last updated: {lastUpdate} ({videoCount} videos, {channelCount} channels)</p>
-      <p>Videos are <a href="https://github.com/jschuur/videos.learnchinese.club/">updated</a> every 30 minutes from a curated selection of YouTube channels via the YouTube API</p>
+      Last updated: {lastUpdate} ({videoCount} videos, {channelCount} channels).</p>
+      <p>Videos are <a href="https://github.com/jschuur/videos.learnchinese.club/">updated</a> every 30 minutes from a curated selection of YouTube channels via the YouTube API. <a href="https://github.com/jschuur/videos.learnchinese.club/labels/bug">Bugs</a> / <a href="https://github.com/jschuur/videos.learnchinese.club/projects/2">Roadmap</a>.</p>
     </Footer>
   )
 }
