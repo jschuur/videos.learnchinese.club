@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Link } from "gatsby"
 
 import './Layout.css';
+import SEO from './SEO';
 import Footer from './Footer';
 
 const Header = styled.h1`
@@ -25,6 +26,7 @@ const Container = styled.div`
 export default ({ children }) => {
   return (
     <Container>
+      <SEO />
       <Header><Link to="/">好好学习天天向上</Link></Header>
       { children }
 

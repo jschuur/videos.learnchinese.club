@@ -35,7 +35,6 @@ const PaginationWrapper = styled.div`
 `;
 
 export default function Pagination({ page, numPages }) {
-  console.log(`numPages: ${numPages} (${page})`);
   if (page > 1) {
     var newerLink = page === 2 ? '/' : `/page/${page - 1}`;
   }

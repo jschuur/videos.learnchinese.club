@@ -3,12 +3,14 @@ import React from 'react'
 import Layout from '../components/Layout'
 import VideoList from '../components/VideoList';
 import Pagination from '../components/Pagination';
+import SEO from '../components/SEO';
 
-export default ({ data, pageContext }) => {
+export default ({ data, pageContext: { videos, currentPage, numPages }}) => {
   return (
     <Layout>
-        <VideoList videos={ pageContext.videos } />
-        <Pagination page={ pageContext.currentPage } numPages={ pageContext.numPages }/>
+        <SEO title={`Archive (Page ${currentPage})`} />
+        <VideoList videos={ videos } />
+        <Pagination page={ currentPage } numPages={ numPages }/>
     </Layout>
   );
 }

@@ -15,8 +15,12 @@ var mongoDBExtraParams =
 
 module.exports = {
   siteMetadata: {
-    title: `Learn Chinese Club Videos`,
-    siteUrl: 'https://videos.learnchinese.club',
+    title: 'Learn Chinese Club (YouTube videos)',
+    titleTemplate: '%s · Learn Chinese Club (YouTube videos)',
+    description: 'All the latest Chinese language learning videos from YouTube.',
+    url: 'https://videos.learnchinese.club',
+    image: '/',
+    twitterUsername: '@LearnChineseCLB',
     lastUpdate: new Date().toUTCString(),
   },
   plugins: [
@@ -28,6 +32,7 @@ module.exports = {
         anonymize: true,
       },
     },
+    `gatsby-plugin-react-helmet`,
     {
       resolve: 'gatsby-source-mongodb',
       options: {
