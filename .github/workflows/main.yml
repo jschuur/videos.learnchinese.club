@@ -2,7 +2,7 @@ name: Redeploy Gatsby site
 
 on:
   schedule:
-    - cron: '*/30 * * * * *'
+    - cron: '*/30 * * * *'
   push:
     branches:
       - production
