@@ -1,4 +1,4 @@
-name: Redeploy Gatsby site
+name: Rebuild Gatsby site
 
 on:
   schedule:
@@ -7,7 +7,6 @@ on:
     branches:
       - production
   repository_dispatch:
-    types: rebuild
 
 env:
   NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

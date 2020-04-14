@@ -8,7 +8,7 @@ const DISPATCH_URL = 'https://api.github.com/repos/jschuur/videos.learnchinese.c
 
 console.log(`Triggering GitHub Action rebuild...`);
 
-axios.post(DISPATCH_URL, { event_type: "rebuild" }, {
+axios.post(DISPATCH_URL, { event_type: "Manual Gatsby site rebuild" }, {
   headers: {
     'Accept': 'application/vnd.github.everest-preview+json',
     'Authorization': `token ${process.env.GITHUB_PERSONAL_TOKEN}`
