@@ -8,6 +8,7 @@ plugins:
   - serverless-offline-dotenv
   - serverless-offline
   - serverless-domain-manager
+  - serverless-prune-plugin
 
 package:
   individually: true
@@ -32,6 +33,9 @@ custom:
     stage: ${self:custom.stage}
     certificateName: '*.learnchinese.club'
     createRoute53Record: true
+  prune:
+    automatic: true
+    number: 3
 
 provider:
   name: aws
