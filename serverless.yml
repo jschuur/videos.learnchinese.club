@@ -77,7 +77,7 @@ functions:
     handler: server/update.videos
     timeout: 30
     events:
-      - schedule: rate(60 minutes)
+      - schedule: cron(25,55 * * * ? *)
 
   update_channels:
     handler: server/update.channels
