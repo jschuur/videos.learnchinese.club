@@ -41,7 +41,7 @@ module.exports = {
         name: SITE_TITLE,
         short_name: '学习中文视频',
         description: SITE_DESCRIPTION,
-        start_url: 'https://videos.learnchinese.club',
+        start_url: `/`,
         background_color: '#f7f0eb',
         theme_color: '#a2466c',
         display: 'standalone',
