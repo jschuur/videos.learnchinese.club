@@ -1,6 +1,6 @@
-import React from "react"
+import React from 'react';
 import styled from 'styled-components';
-import { Link } from "gatsby"
+import { Link } from 'gatsby';
 
 import './Layout.css';
 import SEO from './SEO';
@@ -27,10 +27,12 @@ export default ({ children }) => {
   return (
     <Container>
       <SEO />
-      <Header><Link to="/">好好学习天天向上</Link></Header>
-      { children }
+      <Header>
+        <Link to="/">好好学习天天向上</Link>
+      </Header>
+      {children}
 
       <Footer />
     </Container>
-  )
-}
+  );
+};

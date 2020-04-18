@@ -16,7 +16,7 @@ export default ({ data }) => {
   return (
     <Layout>
       <VideoList videos={videos} />
-      <Pagination page={1} numPages={ Math.ceil(data.videos.totalCount / VIDEOS_PER_PAGE) } />
+      <Pagination page={1} numPages={Math.ceil(data.videos.totalCount / VIDEOS_PER_PAGE)} />
     </Layout>
   );
 };

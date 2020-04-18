@@ -1,5 +1,5 @@
 require('dotenv').config({
-  path: `../.env.${process.env.NODE_ENV}`,
+  path: `../.env.${process.env.NODE_ENV}`
 });
 
 import { SITE_TITLE, SITE_DESCRIPTION } from './src/config';
@@ -8,11 +8,11 @@ import { SITE_TITLE, SITE_DESCRIPTION } from './src/config';
 var mongoDBExtraParams =
   process.env.NODE_ENV == 'production'
     ? {
-      retryWrites: true,
-      ssl: true,
-      authSource: 'admin',
-      replicaSet: process.env.MONGODB_REPLICASET,
-    }
+        retryWrites: true,
+        ssl: true,
+        authSource: 'admin',
+        replicaSet: process.env.MONGODB_REPLICASET
+      }
     : undefined;
 
 module.exports = {
@@ -23,7 +23,7 @@ module.exports = {
     url: 'https://videos.learnchinese.club',
     image: '/images/logo-512x512.png',
     twitterUsername: '@LearnChineseCLB',
-    lastUpdate: new Date().toUTCString(),
+    lastUpdate: new Date().toUTCString()
   },
   plugins: [
     {
@@ -31,8 +31,8 @@ module.exports = {
       options: {
         trackingId: `UA-107202787-3`,
         head: false,
-        anonymize: true,
-      },
+        anonymize: true
+      }
     },
     `gatsby-plugin-react-helmet`,
     {
@@ -49,30 +49,30 @@ module.exports = {
           {
             src: '/images/logo-16x16.png',
             sizes: '16x16',
-            type: 'image/png',
+            type: 'image/png'
           },
           {
             src: '/images/logo-32x32.png',
             sizes: '32x32',
-            type: 'image/png',
+            type: 'image/png'
           },
           {
             src: '/favicon.io',
             sizes: '48x48',
-            type: 'image/x-icon',
+            type: 'image/x-icon'
           },
           {
             src: '/images/logo-192x192.png',
             sizes: '192x192',
-            type: 'image/png',
+            type: 'image/png'
           },
           {
             src: '/images/logo-512x512.png',
             sizes: '512x512',
-            type: 'image/png',
-          },
-        ],
-      },
+            type: 'image/png'
+          }
+        ]
+      }
     },
     {
       resolve: 'gatsby-source-mongodb',
@@ -81,14 +81,14 @@ module.exports = {
         collection: ['videos', 'channels'],
         server: {
           address: process.env.MONGODB_HOST,
-          port: 27017,
+          port: 27017
         },
         auth: {
           user: process.env.MONGODB_USER,
-          password: process.env.MONGODB_PASSWORD,
+          password: process.env.MONGODB_PASSWORD
         },
-        extraParams: mongoDBExtraParams,
-      },
-    },
+        extraParams: mongoDBExtraParams
+      }
+    }
   ]
 };

@@ -42,7 +42,7 @@ const VideoDuration = styled.span`
 export default function VideoItem({
   video: { videoId, title, link, channel, pubDate, contentDetails }
 }) {
-  var thumbnail = getVideoThumbnail(videoId, 'medium');
+  const thumbnail = getVideoThumbnail(videoId, 'medium');
 
   return (
     <VideoCard>
@@ -57,7 +57,9 @@ export default function VideoItem({
       </a>
       <Title>
         {title.trim()}
-        <VideoDuration>{contentDetails?.duration && ` (${ytDurationFormat(contentDetails.duration)})`}</VideoDuration>
+        <VideoDuration>
+          {contentDetails?.duration && ` (${ytDurationFormat(contentDetails.duration)})`}
+        </VideoDuration>
       </Title>
       <Age date={pubDate} />
     </VideoCard>

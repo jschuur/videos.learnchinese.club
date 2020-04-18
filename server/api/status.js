@@ -11,10 +11,10 @@ export async function handler(event, context) {
     await dbConnect();
 
     const videoCount = await Video.countDocuments();
-    const channelCount = await Channel.countDocuments()
+    const channelCount = await Channel.countDocuments();
 
     return buildHttpResponse({ videoCount, channelCount });
-  } catch(err) {
+  } catch (err) {
     return buildHttpError(err);
   }
-};
+}

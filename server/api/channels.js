@@ -15,19 +15,22 @@ export async function get(event, context) {
 
 async function parseParameters(event) {
   const { url, secret } = JSON.parse(event.body);
+  let videoId, channelId;
 
-  if(secret != process.env.ADD_URL_SECRET) throw new APIError(401, 'Unauthorized access');
-  if(!url) throw new APIError(400, 'Missing URL');
+  if (secret !== process.env.ADD_URL_SECRET) throw new APIError(401, 'Unauthorized access');
+  if (!url) throw new APIError(400, 'Missing URL');
 
   const site = parse(decodeURIComponent(url), true);
-  if(!site) throw new APIError(400, 'Invalid URL');
-  if(!site.hostname.match(/youtube.com$/)) throw new APIError(400, 'No valid YouTube URL detected');
+  if (!site) throw new APIError(400, 'Invalid URL');
+  if (!site.hostname.match(/youtube.com$/))
+    throw new APIError(400, 'No valid YouTube URL detected');
 
-  var match = site.pathname.match(/\/channel\/([^\/]*)/);
-  if(match) {
-    var channelId = match[1];
-  } else if(site.pathname == '/watch') {
-    var videoId = site.query.v;
+  // eslint-disable-next-line no-useless-escape
+  const match = site.pathname.match(/\/channel\/([^\/]*)/);
+  if (match) {
+    [channelId] = match;
+  } else if (site.pathname === '/watch') {
+    videoId = site.query.v;
   }
 
   return { channelId, videoId };
@@ -42,7 +45,7 @@ export async function post(event, context) {
     const status = await addNewChannel(await parseParameters(event));
 
     return buildHttpResponse({ status });
-  } catch(err) {
+  } catch (err) {
     return buildHttpError(err);
   }
 }

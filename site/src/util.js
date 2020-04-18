@@ -4,7 +4,7 @@ export function getVideoThumbnail(videoId, resolution) {
     medium: { prefix: 'mq', width: 320, height: 180 },
     high: { prefix: 'hq', width: 480, height: 360 },
     standard: { prefix: 'sd', width: 640, height: 480 },
-    maxres: { prefix: 'maxres', width: 1280, height: 720 },
+    maxres: { prefix: 'maxres', width: 1280, height: 720 }
   };
 
   const { prefix, width, height } = resolutions[resolution];
@@ -18,12 +18,12 @@ export function getVideoThumbnail(videoId, resolution) {
 
 // TODO: Use populate https://github.com/jschuur/videos.learnchinese.club/issues/19
 export function populateChannelInfo(videos, channels, fields) {
-  videos.forEach(video => {
-    let channel = channels.find(channel => channel.channelId === video.channelId);
+  videos.forEach((video) => {
+    const channel = channels.find((c) => c.channelId === video.channelId);
 
     if (channel) {
       video.channel = {};
-      fields.forEach(field => video.channel[field] = channel[field]);
+      fields.forEach((field) => (video.channel[field] = channel[field]));
     }
 
     return video;

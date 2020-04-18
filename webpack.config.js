@@ -1,5 +1,5 @@
 const slsw = require('serverless-webpack');
-var ContextReplacementPlugin = require("webpack/lib/ContextReplacementPlugin");
+var ContextReplacementPlugin = require('webpack/lib/ContextReplacementPlugin');
 
 module.exports = {
   target: 'node',
@@ -7,21 +7,16 @@ module.exports = {
   mode: slsw.lib.webpack.isLocal ? 'development' : 'production',
   node: false,
   optimization: {
-    minimize: slsw.lib.webpack.isLocal ? false : true,
+    minimize: slsw.lib.webpack.isLocal ? false : true
   },
   devtool: 'inline-cheap-module-source-map',
   stats: {
-    warningsFilter: [
-      'mongodb-client-encryption',
-      'saslprep'
-    ],
+    warningsFilter: ['mongodb-client-encryption', 'saslprep'],
     modules: false,
     entrypoints: false,
     colors: true
   },
-  plugins: [
-    new ContextReplacementPlugin(/.*/)
-  ],
+  plugins: [new ContextReplacementPlugin(/.*/)],
   module: {
     rules: [
       {
@@ -32,10 +27,7 @@ module.exports = {
             loader: 'babel-loader',
             options: {
               presets: [
-                [
-                  '@babel/preset-env',
-                  { targets: { node: '12' }, useBuiltIns: 'usage', corejs: 3 }
-                ]
+                ['@babel/preset-env', { targets: { node: '12' }, useBuiltIns: 'usage', corejs: 3 }]
               ]
             }
           }

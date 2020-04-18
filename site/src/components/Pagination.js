@@ -2,10 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'gatsby';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faChevronRight,
-  faChevronLeft
-} from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
 const PaginationButton = styled.div`
   a {
@@ -24,8 +21,6 @@ const PaginationButton = styled.div`
   padding: 8px 16px;
   vertical-align: middle;
   margin: 0 20px;
-  /* ${props => props.previous && 'float: left'};
-  ${props => props.next && 'float: right'}; */
 `;
 
 const PaginationWrapper = styled.div`
@@ -35,12 +30,14 @@ const PaginationWrapper = styled.div`
 `;
 
 export default function Pagination({ page, numPages }) {
+  let newerLink, olderLink;
+
   if (page > 1) {
-    var newerLink = page === 2 ? '/' : `/page/${page - 1}`;
+    newerLink = page === 2 ? '/' : `/page/${page - 1}`;
   }
 
   if (page < numPages) {
-    var olderLink = `/page/${page + 1}`;
+    olderLink = `/page/${page + 1}`;
   }
 
   return (
@@ -53,7 +50,7 @@ export default function Pagination({ page, numPages }) {
           </Link>
         </PaginationButton>
       ) : (
-        <div></div>
+        <div />
       )}
 
       {olderLink ? (
@@ -64,7 +61,7 @@ export default function Pagination({ page, numPages }) {
           </Link>
         </PaginationButton>
       ) : (
-        <div></div>
+        <div />
       )}
     </PaginationWrapper>
   );

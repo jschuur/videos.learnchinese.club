@@ -73,13 +73,13 @@ functions:
           method: get
 
   update_videos:
-    handler: server/update.videos
+    handler: server/update.updateVideos
     timeout: 30
     events:
       - schedule: cron(25,55 * * * ? *)
 
   update_channels:
-    handler: server/update.channels
+    handler: server/update.updateChannels
     timeout: 60
     events:
       - schedule: rate(6 hours)
