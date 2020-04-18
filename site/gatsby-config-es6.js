@@ -1,12 +1,12 @@
+import { SITE_TITLE, SITE_DESCRIPTION } from './src/config';
+
 require('dotenv').config({
   path: `../.env.${process.env.NODE_ENV}`
 });
 
-import { SITE_TITLE, SITE_DESCRIPTION } from './src/config';
-
 // https://stackoverflow.com/questions/54089978/stuck-trying-to-fetch-data-from-mongodb-into-gatsby-using-gatsby-source-mongodb
-var mongoDBExtraParams =
-  process.env.NODE_ENV == 'production'
+const mongoDBExtraParams =
+  process.env.NODE_ENV === 'production'
     ? {
         retryWrites: true,
         ssl: true,
@@ -32,6 +32,16 @@ module.exports = {
         trackingId: `UA-107202787-3`,
         head: false,
         anonymize: true
+      }
+    },
+    {
+      resolve: `gatsby-plugin-google-fonts`,
+      options: {
+        fonts: [
+          // eslint-disable-next-line no-useless-escape
+          `Roboto\:500` // you can also specify font weights and styles
+        ],
+        display: 'swap'
       }
     },
     `gatsby-plugin-react-helmet`,

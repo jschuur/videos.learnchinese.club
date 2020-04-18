@@ -19,7 +19,7 @@ const Header = styled.h1`
 const Container = styled.div`
   font-family: Arial, Helvetica, sans-serif;
   width: 80%;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
 `;
 
