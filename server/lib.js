@@ -18,7 +18,7 @@ import {
   parseAllInts
 } from '/util';
 
-import { MAX_API_SEARCH_LIMIT } from '/config';
+import { MAX_YOUTUBE_API_SEARCH_LIMIT } from '/config';
 
 // Remap some fields when importing from YouTube RSS feeds
 const parser = new Parser({
@@ -166,22 +166,36 @@ function extractVideoDataRSS(video, channelId) {
 
 // Grab recent videos via their RSS feed
 export async function getLatestVideosFromRSS(channels) {
-  let feed;
-
   console.log(`Looking for recent uploads via RSS feeds for ${channels.length} channels`);
 
   const videos = (
     await Promise.all(
       channels.map(async (channel) => {
+        let feed = [];
+        const { uploadsPlaylistId, matchingPlaylists } = channel;
+
         debug(`Getting updates via RSS for ${channel.title}`);
 
         try {
-          feed = await parser.parseURL(buildFeedUrl(channel.channelId));
+          feed = [];
+          if (matchingPlaylists?.length) {
+            feed = (
+              await Promise.all(
+                matchingPlaylists.map(async (playlist) => parser.parseURL(buildFeedUrl(playlist)))
+              )
+            )
+              .map((el) => el.items)
+              .flat();
+          } else if (uploadsPlaylistId) {
+            feed = (await parser.parseURL(buildFeedUrl(uploadsPlaylistId))).items;
+          } else {
+            debug(`Skipping channel ID ${channel.channelId}, no playlists defined`);
+          }
         } catch (err) {
           console.warn(`Couldn't get channel uploads via RSS for ${channel.name} (${err.message})`);
         }
 
-        return feed.items.map((video) => extractVideoDataRSS(video, channel.channelId));
+        return feed.map((video) => extractVideoDataRSS(video, channel.channelId));
       })
     )
   ).flat();
@@ -208,11 +222,16 @@ function extractVideoDataAPI({ snippet }) {
 export async function getLatestVideosFromAPI(channels, maxResults = 20) {
   console.log(`Looking for recent uploads via API for ${channels.length} channels`);
 
+  const playlistIds = channels
+    // TODO: does this work for empty matchingPlaylists array?
+    .map((channel) => channel.matchingPlaylists || channel.uploadsPlaylistId)
+    .flat();
+
   // https://developers.google.com/youtube/v3/docs/playlistItems/list
   const response = await batchYouTubeRequest({
     endpoint: 'playlistItems.list',
     part: 'snippet',
-    playlistIds: channels.map((c) => c.uploadsPlaylistId),
+    playlistIds,
     maxResults
   });
 
@@ -278,7 +297,7 @@ export async function saveVideos(videos) {
   return response;
 }
 
-async function addChannelByChannelId(channelId) {
+async function addChannelByChannelId(channelId, playlistId = null) {
   let response;
 
   // Get the full channel data from the YouTube API
@@ -293,11 +312,14 @@ async function addChannelByChannelId(channelId) {
     const { title } = channel;
 
     try {
-      response = await Channel.updateOne(
-        { channelId },
-        { _id: channelId, shortTitle: channel.title, ...channel },
-        { upsert: true }
-      );
+      // TODO: This would reset the shortTitle if you added a channel again, wouldn't it?
+      const update = { _id: channelId, shortTitle: channel.title, ...channel };
+      if (playlistId) {
+        update.$addToSet = { matchingPlaylists: playlistId };
+        channel.matchingPlaylists = [playlistId];
+      }
+
+      response = await Channel.updateOne({ channelId }, update, { upsert: true });
     } catch (err) {
       throw new APIError(500, `Couldn't save new channel to database (${err.message})`);
     }
@@ -317,12 +339,13 @@ async function addChannelByChannelId(channelId) {
 
       return status;
     }
+    // TODO: Better message after adding a second playlist for a channel
     return `YouTube channel ${title} is already tracked`;
   }
   throw new APIError(400, `YouTube API returned no channel info for ${channelId}`);
 }
 
-export async function addNewChannel({ videoId, channelId }) {
+export async function addNewChannel({ videoId, channelId, playlistId }) {
   if (videoId) {
     // Look up a video's channel first
     const [video] = await batchYouTubeRequest({
@@ -337,6 +360,19 @@ export async function addNewChannel({ videoId, channelId }) {
     throw new APIError(400, `YouTube API returned no video info for ${videoId}`);
   } else if (channelId) {
     return addChannelByChannelId(channelId);
+  } else if (playlistId) {
+    const [video] = await batchYouTubeRequest({
+      endpoint: 'playlistItems.list',
+      part: 'snippet',
+      playlistIds: [playlistId],
+      maxResults: 1
+    });
+
+    if (video) {
+      return addChannelByChannelId(video.snippet.channelId, playlistId);
+    }
+
+    throw new APIError(400, 'Unable to identify channel for this playlist');
   } else {
     throw new APIError(400, 'Did not specify channel or video ID');
   }
@@ -360,9 +396,9 @@ export async function searchModelAPI(model, params) {
     let { filter, skip, limit = 10, sort, projection, population } = aqp(queryString);
 
     // sensible defaults
-    if (limit > MAX_API_SEARCH_LIMIT) {
-      limit = MAX_API_SEARCH_LIMIT;
-      response.notice = `Max result size hit. Only returning first ${MAX_API_SEARCH_LIMIT} matches (use skip parameter to paginate).`;
+    if (limit > MAX_YOUTUBE_API_SEARCH_LIMIT) {
+      limit = MAX_YOUTUBE_API_SEARCH_LIMIT;
+      response.notice = `Max result size hit. Only returning first ${MAX_YOUTUBE_API_SEARCH_LIMIT} matches (use skip parameter to paginate).`;
     }
     if (!sort) {
       sort = { pubDate: -1 };

@@ -13,9 +13,9 @@ export async function get(event, context) {
   return searchModelAPI(Channel, event.queryStringParameters);
 }
 
-async function parseParameters(event) {
+function parseParameters(event) {
   const { url, secret } = JSON.parse(event.body);
-  let videoId, channelId;
+  let videoId, channelId, playlistId;
 
   if (secret !== process.env.ADD_URL_SECRET) throw new APIError(401, 'Unauthorized access');
   if (!url) throw new APIError(400, 'Missing URL');
@@ -31,9 +31,11 @@ async function parseParameters(event) {
     [channelId] = match;
   } else if (site.pathname === '/watch') {
     videoId = site.query.v;
+  } else if (site.pathname === '/playlist') {
+    playlistId = site.query.list;
   }
 
-  return { channelId, videoId };
+  return { channelId, videoId, playlistId };
 }
 
 export async function post(event, context) {
@@ -42,7 +44,7 @@ export async function post(event, context) {
   try {
     await dbConnect();
 
-    const status = await addNewChannel(await parseParameters(event));
+    const status = await addNewChannel(parseParameters(event));
 
     return buildHttpResponse({ status });
   } catch (err) {

@@ -2,6 +2,8 @@ import { google } from 'googleapis';
 import chunks from 'lodash.chunk';
 import chalk from 'chalk';
 
+import { MAX_YOUTUBE_BATCH_SIZE } from '/config';
+
 // Get new videos
 // playlistItems.list / playlistId / one at a time / part: snippet
 
@@ -16,8 +18,6 @@ import chalk from 'chalk';
 
 // Update video view/rating, duration
 // videos.list / id / batchable / part: statistics
-
-const MAX_BATCH_SIZE = 50;
 
 const youtube = google.youtube({
   version: 'v3',
@@ -40,7 +40,7 @@ export function debug(message, data = null) {
 
 export async function batchYouTubeRequest({ endpoint, ids, playlistIds, ...options }) {
   let idField = 'id';
-  let batchSize = MAX_BATCH_SIZE;
+  let batchSize = MAX_YOUTUBE_BATCH_SIZE;
   const [model, action] = endpoint.split('.');
   const apiOptions = { ...options };
   let response;
@@ -93,8 +93,9 @@ export function getVideoThumbnail(videoId, resolution) {
   };
 }
 
-export const buildFeedUrl = (channelId) =>
-  `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+// Also valid: https://www.youtube.com/feeds/videos.xml?channel_id=
+export const buildFeedUrl = (playlistId) =>
+  `https://www.youtube.com/feeds/videos.xml?playlist_id=${playlistId}`;
 
 export function buildHttpResponse({ statusCode = 200, status = 'Success', ...data }) {
   return {

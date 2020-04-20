@@ -1,1 +1,2 @@
-export const MAX_API_SEARCH_LIMIT = 100;
+export const MAX_YOUTUBE_API_SEARCH_LIMIT = 100;
+export const MAX_YOUTUBE_BATCH_SIZE = 50;

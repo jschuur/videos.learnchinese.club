@@ -35,7 +35,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['server/**/*.js', 'utils/**/*.js'],
+      files: ['server/**/*.js', 'utils/**/*.js', './test.js'],
       rules: {
         'no-console': 0
       }

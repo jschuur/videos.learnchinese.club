@@ -17,6 +17,7 @@ export default mongoose.model(
       thumbnails: Schema.Types.Mixed,
       statistics: Schema.Types.Mixed,
       uploadsPlaylistId: String,
+      matchingPlaylists: Array,
       homepage: String,
       twitter: String,
       instagram: String

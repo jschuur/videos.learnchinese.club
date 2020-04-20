@@ -81,5 +81,5 @@ fi
 
 if [ -n "$ARG_CLEANUP" ] ; then
   echo 'Doing cleanup'
-  # rm -f channels.json videos.json
+  rm -f channels.json videos.json
 fi
