@@ -1,5 +1,6 @@
 import React from 'react';
 import { useStaticQuery, graphql } from 'gatsby';
+import TimeAgo from 'react-timeago';
 import styled from 'styled-components';
 
 const Footer = styled.footer`
@@ -37,8 +38,8 @@ export default () => {
         © {new Date().getFullYear()} by <a href="https://twitter.com/joostschuur">Joost Schuur</a> (
         <a href="https://twitter.com/LearnChineseCLB">@LearnChineseCLB</a>), built with{' '}
         <a href="https://www.gatsbyjs.org">Gatsby</a>, hosted on{' '}
-        <a href="https://www.netlify.com/">Netlify</a>. Last updated: {lastUpdate} ({videoCount}{' '}
-        videos, {channelCount} channels).
+        <a href="https://www.netlify.com/">Netlify</a>. Last updated: <TimeAgo date={lastUpdate} />{' '}
+        ({videoCount} videos, {channelCount} channels).
       </p>
       <p>
         Videos are <a href="https://github.com/jschuur/videos.learnchinese.club/">updated</a> every

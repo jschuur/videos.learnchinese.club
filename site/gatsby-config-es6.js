@@ -23,7 +23,7 @@ module.exports = {
     url: 'https://videos.learnchinese.club',
     image: '/images/logo-512x512.png',
     twitterUsername: '@LearnChineseCLB',
-    lastUpdate: new Date().toUTCString()
+    lastUpdate: new Date()
   },
   plugins: [
     {
