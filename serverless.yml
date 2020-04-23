@@ -19,12 +19,8 @@ custom:
   stage: ${opt:stage, self:provider.stage}
   serverless-offline:
     useChildProcesses: true
-  client:
-    distributionFolder: site/public
-    bucketName: club.learnchinese.videos
   domains:
     prod: api.learnchinese.club
-    dev: api-dev.learnchinese.club
   domain: ${self:custom.domains.${self:custom.stage}}
   customDomain:
     domainName: ${self:custom.domains.${self:custom.stage}}

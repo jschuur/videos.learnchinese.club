@@ -1,19 +1,33 @@
+import parse from 'url-parse';
 import { SITE_TITLE, SITE_DESCRIPTION } from './src/config';
 
 require('dotenv').config({
   path: `../.env.${process.env.NODE_ENV}`
 });
 
-// https://stackoverflow.com/questions/54089978/stuck-trying-to-fetch-data-from-mongodb-into-gatsby-using-gatsby-source-mongodb
-const mongoDBExtraParams =
-  process.env.NODE_ENV === 'production'
-    ? {
-        retryWrites: true,
-        ssl: true,
-        authSource: 'admin',
-        replicaSet: process.env.MONGODB_REPLICASET
-      }
-    : undefined;
+// gatsby-source-mongodb needs options in a specific format for MongoDB Atlas
+// By extracting it from MONGODB_URL, we can reuse the same secret
+// for Mongoose in the lambdas, which has different URL requirements
+function extractMongoDbOptions(dbUrl) {
+  const {
+    protocol,
+    username,
+    password,
+    hostname,
+    port = '27017',
+    pathname,
+    extraParams: query
+  } = parse(dbUrl, true);
+
+  const connectionString = `${protocol}//${username}:${password}@${hostname}:${port}`;
+
+  return {
+    dbName: pathname.replace('/', ''),
+    connectionString,
+    collection: ['videos', 'channels'],
+    extraParams: query
+  };
+}
 
 module.exports = {
   siteMetadata: {
@@ -86,19 +100,7 @@ module.exports = {
     },
     {
       resolve: 'gatsby-source-mongodb',
-      options: {
-        dbName: process.env.MONGODB_DATABASE,
-        collection: ['videos', 'channels'],
-        server: {
-          address: process.env.MONGODB_HOST,
-          port: 27017
-        },
-        auth: {
-          user: process.env.MONGODB_USER,
-          password: process.env.MONGODB_PASSWORD
-        },
-        extraParams: mongoDBExtraParams
-      }
+      options: extractMongoDbOptions(process.env.MONGODB_URL)
     }
   ]
 };
