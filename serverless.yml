@@ -38,15 +38,23 @@ provider:
 
 functions:
   getVideos:
-    handler: server/api/videos.get
+    handler: server/api/videos.getVideos
     events:
       - http:
           path: videos
           method: get
           cors: true
 
+  deleteVideo:
+    handler: server/api/videos.deleteVideo
+    events:
+      - http:
+          path: videos/
+          method: delete
+          cors: true
+
   getChannels:
-    handler: server/api/channels.get
+    handler: server/api/channels.getChannels
     events:
       - http:
           path: channels
@@ -54,7 +62,7 @@ functions:
           cors: true
 
   addChannel:
-    handler: server/api/channels.post
+    handler: server/api/channels.addChannel
     events:
       - http:
           path: channels
@@ -62,7 +70,7 @@ functions:
           cors: true
 
   status:
-    handler: server/api/status.handler
+    handler: server/api/status.getStatus
     events:
       - http:
           path: status/

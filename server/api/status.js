@@ -4,7 +4,7 @@ import { buildHttpResponse, buildHttpError } from '/util';
 import Video from '/models/Video';
 import Channel from '/models/Channel';
 
-export async function handler(event, context) {
+export async function getStatus(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;
 
   try {

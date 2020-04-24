@@ -2,6 +2,7 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import pluralize from 'pluralize';
 import aqp from 'api-query-params';
 import Parser from 'rss-parser';
+import parseURL from 'url-parse';
 
 import Video from '/models/Video';
 import Channel from '/models/Channel';
@@ -378,6 +379,22 @@ export async function addNewChannel({ videoId, channelId, playlistId }) {
   }
 }
 
+export async function deleteVideoById(videoId) {
+  try {
+    const results = await Video.updateOne({ videoId }, { $set: { isDeleted: true } });
+
+    if (results?.nModified) {
+      return `Video deleted`;
+    }
+    if (results?.n) {
+      throw new APIError(400, 'Video already deleted');
+    }
+    throw new APIError(404, `Not in database`);
+  } catch (err) {
+    throw new APIError(err.statusCode || 500, `Couldn't delete video ${videoId} (${err.message})`);
+  }
+}
+
 // wrapper function for a GET API endpoint for channels, videos that handles search
 export async function searchModelAPI(model, params) {
   let response;
@@ -432,6 +449,28 @@ export async function searchModelAPI(model, params) {
     }
 
     return buildHttpResponse(response);
+  } catch (err) {
+    return buildHttpError(err);
+  }
+}
+
+export async function bookmarkletAction(event, validateData, callback) {
+  try {
+    await dbConnect();
+
+    const { url, secret } = JSON.parse(event.body);
+
+    if (secret !== process.env.ADD_URL_SECRET) throw new APIError(401, 'Unauthorized access');
+    if (!url) throw new APIError(400, 'Missing URL');
+
+    const urlData = parseURL(decodeURIComponent(url), true);
+
+    if (!urlData) throw new APIError(400, 'Invalid URL');
+    if (!urlData.hostname.match(/youtube.com$/))
+      throw new APIError(400, 'No valid YouTube URL detected');
+
+    const bookmarkletData = validateData(urlData);
+    return buildHttpResponse({ status: await callback(bookmarkletData) });
   } catch (err) {
     return buildHttpError(err);
   }
