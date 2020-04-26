@@ -397,7 +397,7 @@ export async function deleteVideoById(videoId) {
 
 // wrapper function for a GET API endpoint for channels, videos that handles search
 export async function searchModelAPI(model, params) {
-  let response;
+  let response = {};
 
   try {
     await dbConnect();
@@ -432,6 +432,7 @@ export async function searchModelAPI(model, params) {
 
     // Let's go nuts and hit the database again!
     response = {
+      ...response,
       totalCount: await model.countDocuments({}),
       matchingCount: await model.countDocuments(filter),
       ...(skip && { skip }),
