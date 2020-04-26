@@ -21,6 +21,7 @@ custom:
     useChildProcesses: true
   domains:
     prod: api.learnchinese.club
+    dev: api-dev.learnchinese.club
   domain: ${self:custom.domains.${self:custom.stage}}
   customDomain:
     domainName: ${self:custom.domains.${self:custom.stage}}

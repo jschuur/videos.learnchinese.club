@@ -41,11 +41,11 @@ then
 
   if [ -n "$ARG_CHANNELS" ] ; then
     echo 'Exporting production channels collection'
-    mongoexport --host Cluster0-shard-0/cluster0-shard-00-00-lokbd.mongodb.net:27017,cluster0-shard-00-01-lokbd.mongodb.net:27017,cluster0-shard-00-02-lokbd.mongodb.net:27017 --ssl --username $MONGODB_USER --password $MONGODB_PASSWORD --authenticationDatabase admin --db $MONGODB_DATABASE --collection channels --type JSON --out channels.json
+    mongoexport --uri=$MONGODB_URL --collection channels --type JSON --out channels.json
   fi
   if [ -n "$ARG_VIDEOS" ] ; then
     echo 'Exporting production videos collection'
-    mongoexport --host Cluster0-shard-0/cluster0-shard-00-00-lokbd.mongodb.net:27017,cluster0-shard-00-01-lokbd.mongodb.net:27017,cluster0-shard-00-02-lokbd.mongodb.net:27017 --ssl --username $MONGODB_USER --password $MONGODB_PASSWORD --authenticationDatabase admin --db $MONGODB_DATABASE --collection videos --type JSON --out videos.json
+    mongoexport --uri=$MONGODB_URL --collection videos --type JSON --out videos.json
   fi
 fi
 
@@ -55,11 +55,11 @@ if [ -n "$ARG_IMPORT" ] ; then
 
   if [ -n "$ARG_CHANNELS" ] ; then
     echo 'Importing channels collection to local database'
-    mongoimport --host localhost --db $MONGODB_DATABASE --collection channels $ARG_DROP_COLLECTION --mode=upsert --type JSON --file channels.json
+    mongoimport --uri=$MONGODB_URL --collection channels $ARG_DROP_COLLECTION --mode=upsert --type JSON --file channels.json
   fi
   if [ -n "$ARG_VIDEOS" ] ; then
-    echo 'Importing videos collection to local database'
-    mongoimport --host localhost --db $MONGODB_DATABASE --collection videos $ARG_DROP_COLLECTION --mode=upsert --type JSON --file videos.json
+    echo 'Importing videos collect'
+    mongoimport --uri=$MONGODB_URL --collection videos $ARG_DROP_COLLECTION --mode=upsert --type JSON --file videos.json
   fi
 fi
 
