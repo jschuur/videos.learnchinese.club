@@ -20,6 +20,7 @@
     "rebuild:github": "npm run rebuild:github --prefix site",
     "sync:channels": "sh utils/dbsync.sh -e -C -i -b -c",
     "sync:videos": "sh utils/dbsync.sh -e -V -i -b -c",
+    "backup:prod": "sh utils/dbsync.sh -e -C -V -b -c",
     "test": "babel-node -r dotenv/config test.js dotenv_config_path=.env.development",
     "test:prod": "babel-node -r dotenv/config test.js dotenv_config_path=.env.production"
   },

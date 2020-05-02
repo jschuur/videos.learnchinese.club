@@ -10,7 +10,7 @@ usage() {
   echo "  -V use videos collection\n"
   echo "  -c perform cleanup of JSON files when done"
   echo "  -d drop existing data before an import"
-  echo "  -b move JSON files to backups folder when done"
+  echo "  -b copy JSON files to backups folder when done"
 }
 
 while getopts “:eicdbVC” opt; do
@@ -64,7 +64,7 @@ if [ -n "$ARG_IMPORT" ] ; then
 fi
 
 if [ -n "$ARG_BACKUP" ] ; then
-  echo 'Moving JSON dumps to backup folder'
+  echo "Copying JSON output to $BACKUP_FOLDER folder"
 
   if [ ! -d $BACKUP_FOLDER ] ; then
     echo 'Creating backup folder'
@@ -72,14 +72,21 @@ if [ -n "$ARG_BACKUP" ] ; then
   fi
 
   if [ -e channels.json ] && [ -n "$ARG_CHANNELS" ] ; then
-    cp channels.json $BACKUP_FOLDER
+    cp channels.json $BACKUP_FOLDER/channels_`date +%Y-%m-%d-%H%M%S`.json
   fi
   if [ -e videos.json ] && [ -n "$ARG_VIDEOS" ] ; then
-    cp videos.json $BACKUP_FOLDER
+    cp videos.json $BACKUP_FOLDER/videos_`date +%Y-%m-%d-%H%M%S`.json
   fi
 fi
 
 if [ -n "$ARG_CLEANUP" ] ; then
-  echo 'Doing cleanup'
-  rm -f channels.json videos.json
+  if [ -e videos.json ] && [ -n "$ARG_VIDEOS" ] ; then
+    echo "Removing videos.json"
+    rm -f videos.json
+  fi
+
+  if [ -e channels.json ] && [ -n "$ARG_CHANNELS" ] ; then
+    echo "Removing channels.json"
+    rm -f channels.json
+  fi
 fi
