@@ -16,18 +16,15 @@ export function getVideoThumbnail(videoId, resolution) {
   };
 }
 
-// TODO: Use populate https://github.com/jschuur/videos.learnchinese.club/issues/19
-export function populateChannelInfo(videos, channels, fields) {
-  videos.forEach((video) => {
-    const channel = channels.find((c) => c.channelId === video.channelId);
+// Needed, since gatsby-source-mongodb won't import mongoDB relationships:
+// https://github.com/gatsbyjs/gatsby/pull/12774#issuecomment-480960564
+export function populateRelationships({ parents, children, foreignKey }) {
+  const parentRefs = parents.reduce(
+    (acc, { mongodb_id: ref, ...data }) => ({ ...acc, [ref]: data }),
+    {}
+  );
 
-    if (channel) {
-      video.channel = {};
-      fields.forEach((field) => (video.channel[field] = channel[field]));
-    }
+  children.forEach((child) => (child[foreignKey] = parentRefs[child[foreignKey]]));
 
-    return video;
-  });
-
-  return videos;
+  return children;
 }

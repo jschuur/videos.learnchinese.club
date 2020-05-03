@@ -25,7 +25,8 @@ function extractMongoDbOptions(dbUrl) {
     dbName: pathname.replace('/', ''),
     connectionString,
     collection: ['videos', 'channels'],
-    extraParams: query
+    extraParams: query,
+    preserveObjectIds: true
   };
 }
 

@@ -53,13 +53,13 @@ const VideoDuration = styled.div`
 `;
 
 export default function VideoItem({
-  video: { videoId, title, link, channel, pubDate, contentDetails }
+  video: { videoId, title, link, author, pubDate, contentDetails }
 }) {
   const thumbnail = getVideoThumbnail(videoId, 'medium');
 
   return (
     <VideoCard>
-      <ChannelTitle>{channel?.shortTitle}</ChannelTitle>
+      <ChannelTitle>{author?.shortTitle}</ChannelTitle>
       <a href={link}>
         <ThumbnailWrapper>
           <Thumbnail

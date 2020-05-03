@@ -1,7 +1,7 @@
 import path from 'path';
 
 import { createFilePath } from 'gatsby-source-filesystem';
-import { populateChannelInfo } from './src/util';
+import { populateRelationships } from './src/util';
 
 import { VIDEOS_PER_PAGE } from './src/config';
 
@@ -9,7 +9,7 @@ import { VIDEOS_PER_PAGE } from './src/config';
 exports.sourceNodes = ({ actions }) => {
   const { createTypes } = actions;
   const typeDefs = `
-    type mongodbChineseyoutubeVideos implements Node {
+    type allMongodbLearnchineseclubVideos implements Node {
       isDeleted: Boolean
     }
   `;
@@ -21,7 +21,7 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
   const result = await graphql(
     `
       query VideoArchiveQuery {
-        videos: allMongodbChineseyoutubeVideos(
+        videos: allMongodbLearnchineseclubVideos(
           filter: { isDeleted: { ne: true } }
           sort: { fields: [pubDate], order: DESC }
         ) {
@@ -35,14 +35,16 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
             contentDetails {
               duration
             }
+            author
           }
           totalCount
         }
 
-        channels: allMongodbChineseyoutubeChannels {
+        channels: allMongodbLearnchineseclubChannels {
           nodes {
             channelId
             shortTitle
+            mongodb_id
           }
         }
       }
@@ -53,13 +55,16 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
     return;
   }
 
-  const channels = result.data.channels.nodes;
-  const videos = populateChannelInfo(result.data.videos.nodes, channels, ['shortTitle']);
+  const videos = populateRelationships({
+    parents: result.data.channels.nodes,
+    children: result.data.videos.nodes,
+    foreignKey: 'author'
+  });
   const numPages = Math.ceil(result.data.videos.totalCount / VIDEOS_PER_PAGE);
 
   Array.from({ length: numPages }).forEach((_, i) => {
-    let start = i * VIDEOS_PER_PAGE;
-    let end = i * VIDEOS_PER_PAGE + VIDEOS_PER_PAGE;
+    const start = i * VIDEOS_PER_PAGE;
+    const end = i * VIDEOS_PER_PAGE + VIDEOS_PER_PAGE;
 
     createPage({
       path: i === 0 ? `/page` : `/page/${i + 1}`,
@@ -74,9 +79,10 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
     });
   });
 };
+
 exports.onCreateNode = ({ node, actions, getNode }) => {
   const { createNodeField } = actions;
-  if (node.internal.type === `MongodbChineseyoutubeVideos`) {
+  if (node.internal.type === `allMongodbLearnchineseclubVideos`) {
     const value = createFilePath({ node, getNode });
     createNodeField({
       node,
