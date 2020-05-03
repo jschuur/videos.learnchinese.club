@@ -6,13 +6,13 @@ export default mongoose.model(
   'Channel',
   new Schema(
     {
-      _id: String,
       channelId: String,
       title: String,
       shortTitle: String,
       description: String,
       customURL: String,
       pubDate: Date,
+      videos: [{ type: Schema.Types.ObjectId, ref: 'Video' }],
       country: String,
       thumbnails: Schema.Types.Mixed,
       statistics: Schema.Types.Mixed,

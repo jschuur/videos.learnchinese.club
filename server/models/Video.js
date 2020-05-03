@@ -6,11 +6,11 @@ export default mongoose.model(
   'Video',
   new Schema(
     {
-      _id: String,
       title: String,
       link: String,
       channelTitle: String,
       channelId: String,
+      author: { type: Schema.Types.ObjectId, ref: 'Channel' },
       videoId: String,
       description: String,
       statistics: Schema.Types.Mixed,
