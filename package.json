@@ -23,8 +23,8 @@
     "backup:prod": "sh utils/dbsync.sh -e -C -V -b -c",
     "test": "babel-node -r dotenv/config test.js dotenv_config_path=.env.development",
     "test:prod": "babel-node -r dotenv/config test.js dotenv_config_path=.env.production",
-    "migrate": "babel-node -r dotenv/config migrate.js dotenv_config_path=.env.development",
-    "migrate:prod": "babel-node -r dotenv/config migrate.js dotenv_config_path=.env.production"
+    "migrate": "babel-node -r dotenv/config utils/migrate.js dotenv_config_path=.env.development",
+    "migrate:prod": "babel-node -r dotenv/config utils/migrate.js dotenv_config_path=.env.production"
   },
   "keywords": [
     "chinese",

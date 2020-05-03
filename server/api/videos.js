@@ -1,7 +1,7 @@
 import { searchModelAPI, deleteVideoById, bookmarkletAction } from '/lib';
 import { APIError } from '/util';
 
-import Video from '/models/Video';
+import { Video } from '/models';
 
 export async function getVideos(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;

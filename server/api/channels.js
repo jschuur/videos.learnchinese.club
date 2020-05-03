@@ -1,7 +1,7 @@
 import { APIError } from '/util';
 import { addNewChannel, bookmarkletAction, searchModelAPI } from '/lib';
 
-import Channel from '/models/Channel';
+import { Channel } from '/models';
 
 export async function getChannels(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;

@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
-import Video from '../server/models/Video';
-import Channel from '../server/models/Channel';
+import { Channel, Video } from '../server/models';
 
 (async () => {
   const db = await mongoose.connect(process.env.MONGODB_URL, {

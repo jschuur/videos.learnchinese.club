@@ -4,8 +4,7 @@ import aqp from 'api-query-params';
 import Parser from 'rss-parser';
 import parseURL from 'url-parse';
 
-import Video from '/models/Video';
-import Channel from '/models/Channel';
+import { Channel, Video } from '/models';
 
 import dbConnect from '/db';
 import {
