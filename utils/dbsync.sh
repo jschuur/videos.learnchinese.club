@@ -1,27 +1,29 @@
 #!/bin/bash
 
-BACKUP_FOLDER='backups'
+ENV='production'
 
 usage() {
   echo "Options:"
-  echo "  -e export data from production"
-  echo "  -i import data to local database\n"
+  echo "  -e export data (defaults to production)"
+  echo "  -l use local environment for exports"
+  echo "  -i import data to local database"
   echo "  -C use channels collection"
-  echo "  -V use videos collection\n"
-  echo "  -c perform cleanup of JSON files when done"
+  echo "  -V use videos collection"
+  echo "  -k JSON export in current directory when done"
   echo "  -d drop existing data before an import"
-  echo "  -b copy JSON files to backups folder when done"
+  echo "  -b back up JSON files to S3 when done"
 }
 
-while getopts “:eicdbVC” opt; do
+while getopts “:eikdblVC” opt; do
   case $opt in
     (e) ARG_EXPORT=$'true' ;;
     (i) ARG_IMPORT='true' ;;
-    (c) ARG_CLEANUP='true' ;;
+    (k) ARG_KEEP='true' ;;
     (d) ARG_DROP_COLLECTION='--drop' ;;
     (b) ARG_BACKUP='true' ;;
     (C) ARG_CHANNELS='true' ;;
     (V) ARG_VIDEOS='true' ;;
+    (l) ENV='development' ;;
 
     (*)
       usage
@@ -30,63 +32,66 @@ while getopts “:eicdbVC” opt; do
   no_args=false;
 done
 
+CURRENT_TIMESTAMP=`date +%Y-%m-%d-%H%M%S`
+VIDEOS_JSON="videos_${CURRENT_TIMESTAMP}_$ENV.json"
+CHANNELS_JSON="channels_${CURRENT_TIMESTAMP}_$ENV.json"
+
 if $no_args; then
   usage
   exit
 fi
 
-if [ -n "$ARG_EXPORT" ]
-then
-  export $(cat .env.production | xargs)
+if [ -n "$ARG_EXPORT" ] ; then
+  export $(cat .env.$ENV | xargs)
 
   if [ -n "$ARG_CHANNELS" ] ; then
     echo 'Exporting production channels collection'
-    mongoexport --uri=$MONGODB_URL --collection channels --type JSON --out channels.json
+    mongoexport --uri=$MONGODB_URL --collection channels --type JSON --out $CHANNELS_JSON
   fi
   if [ -n "$ARG_VIDEOS" ] ; then
     echo 'Exporting production videos collection'
-    mongoexport --uri=$MONGODB_URL --collection videos --type JSON --out videos.json
+    mongoexport --uri=$MONGODB_URL --collection videos --type JSON --out $VIDEOS_JSON
   fi
 fi
 
 
 if [ -n "$ARG_IMPORT" ] ; then
-  export $(cat .env.development | xargs)
+  if [ $ENV = 'development' ] ; then
+    echo 'Skipping import, since using development environment for export too'
+  else
+    export $(cat .env.development | xargs)
 
-  if [ -n "$ARG_CHANNELS" ] ; then
-    echo 'Importing channels collection to local database'
-    mongoimport --uri=$MONGODB_URL --collection channels $ARG_DROP_COLLECTION --mode=upsert --type JSON --file channels.json
-  fi
-  if [ -n "$ARG_VIDEOS" ] ; then
-    echo 'Importing videos collect'
-    mongoimport --uri=$MONGODB_URL --collection videos $ARG_DROP_COLLECTION --mode=upsert --type JSON --file videos.json
+    if [ -n "$ARG_CHANNELS" ] ; then
+      echo 'Importing channels collection to local database'
+      mongoimport --uri=$MONGODB_URL --collection channels $ARG_DROP_COLLECTION --mode=upsert --type JSON --file $CHANNELS_JSON
+    fi
+    if [ -n "$ARG_VIDEOS" ] ; then
+      echo 'Importing videos collect'
+      mongoimport --uri=$MONGODB_URL --collection videos $ARG_DROP_COLLECTION --mode=upsert --type JSON --file $VIDEOS_JSON
+    fi
   fi
 fi
 
 if [ -n "$ARG_BACKUP" ] ; then
-  echo "Copying JSON output to $BACKUP_FOLDER folder"
+  echo "Copying JSON output to S3"
 
-  if [ ! -d $BACKUP_FOLDER ] ; then
-    echo 'Creating backup folder'
-    mkdir $BACKUP_FOLDER
-  fi
+  if [ -n "$AWS_BACKUP_DESTINATION" ] ; then
+    if [ -e $CHANNELS_JSON ] && [ -n "$ARG_CHANNELS" ] ; then
+      # cp $CHANNELS_JSON $BACKUP_FOLDER/channels_`date +%Y-%m-%d-%H%M%S`.json
+      aws s3 cp $CHANNELS_JSON $AWS_BACKUP_DESTINATION
+    fi
 
-  if [ -e channels.json ] && [ -n "$ARG_CHANNELS" ] ; then
-    cp channels.json $BACKUP_FOLDER/channels_`date +%Y-%m-%d-%H%M%S`.json
-  fi
-  if [ -e videos.json ] && [ -n "$ARG_VIDEOS" ] ; then
-    cp videos.json $BACKUP_FOLDER/videos_`date +%Y-%m-%d-%H%M%S`.json
+    if [ -e $VIDEOS_JSON ] && [ -n "$ARG_VIDEOS" ] ; then
+      # cp $VIDEOS_JSON $BACKUP_FOLDER/videos_`date +%Y-%m-%d-%H%M%S`.json
+      aws s3 cp $VIDEOS_JSON $AWS_BACKUP_DESTINATION
+    fi
+  else
+    echo "No AWS_BACKUP_DESTINATION set"
   fi
 fi
 
-if [ -n "$ARG_CLEANUP" ] ; then
-  if [ -e videos.json ] && [ -n "$ARG_VIDEOS" ] ; then
-    echo "Removing videos.json"
-    rm -f videos.json
-  fi
-
-  if [ -e channels.json ] && [ -n "$ARG_CHANNELS" ] ; then
-    echo "Removing channels.json"
-    rm -f channels.json
-  fi
+if [ -z "$ARG_KEEP" ] ; then
+  echo "Removing JSON export files"
+  rm -f $VIDEOS_JSON
+  rm -f $CHANNELS_JSON
 fi
