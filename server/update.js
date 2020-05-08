@@ -37,15 +37,14 @@ export async function updateChannels(event, context) {
   try {
     await dbConnect();
 
-    channels = await getChannels({ skipUpdate: true });
+    channels = await getChannels();
     if (!channels?.length) throw new APIError(400, 'No channels found for videos update');
 
-    const { nModified, upsertedCount } = await updateChannelInfo(channels);
+    const { nModified } = await updateChannelInfo(channels);
 
     response = buildHttpResponse({
       channels: channels.length,
-      modified: nModified,
-      added: upsertedCount
+      modified: nModified
     });
   } catch (err) {
     response = buildHttpError(err);

@@ -8,7 +8,6 @@ export default mongoose.model(
     {
       title: String,
       link: String,
-      channelTitle: String,
       channelId: String,
       author: { type: Schema.Types.ObjectId, ref: 'Channel' },
       videoId: String,

@@ -38,6 +38,7 @@ export function debug(message, data = null) {
   }
 }
 
+// Batch YouTube API requests into the appropriate # of calls based on how many IDs it takes
 export async function batchYouTubeRequest({ endpoint, ids, playlistIds, ...options }) {
   let idField = 'id';
   let batchSize = MAX_YOUTUBE_BATCH_SIZE;

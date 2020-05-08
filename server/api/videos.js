@@ -1,4 +1,4 @@
-import { searchModelAPI, deleteVideoById, bookmarkletAction } from '/lib';
+import { searchModelAPI, deleteVideoById, adminAction } from '/lib';
 import { APIError } from '/util';
 
 import { Video } from '/models';
@@ -6,10 +6,10 @@ import { Video } from '/models';
 export async function getVideos(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  return searchModelAPI(Video, event.queryStringParameters);
+  return searchModelAPI({ event, model: Video });
 }
 
-function validateBookmarkletData({ pathname, query }) {
+function getVideoId({ pathname, query }) {
   if (pathname === '/watch' && query.v) {
     return query.v;
   }
@@ -20,5 +20,5 @@ function validateBookmarkletData({ pathname, query }) {
 export async function deleteVideo(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  return bookmarkletAction(event, validateBookmarkletData, deleteVideoById);
+  return adminAction({ event, validate: getVideoId, action: deleteVideoById });
 }

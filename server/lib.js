@@ -1,8 +1,8 @@
-import { GoogleSpreadsheet } from 'google-spreadsheet';
 import pluralize from 'pluralize';
 import aqp from 'api-query-params';
 import Parser from 'rss-parser';
 import parseURL from 'url-parse';
+import groupBy from 'group-array';
 
 import { Channel, Video } from '/models';
 
@@ -25,28 +25,37 @@ const parser = new Parser({
   customFields: {
     item: [
       ['media:group', 'media'],
-      ['yt:videoId', '_id']
+      ['yt:videoId', 'videoId'],
+      ['yt:channelId', 'channelId']
     ]
   }
 });
 
 // Get only the channel data we want to store from an API response
-function extractChannelData(channel) {
-  const { snippet, contentDetails, statistics } = channel;
+function extractChannelData({ id: channelId, snippet, contentDetails, statistics }) {
+  const {
+    title,
+    description,
+    customUrl: customURL,
+    publishedAt: pubDate,
+    country,
+    thumbnails
+  } = snippet;
 
   return {
-    channelId: channel.id,
-    title: snippet.title,
-    description: snippet.description,
-    customURL: snippet.customUrl,
-    pubDate: snippet.publishedAt,
-    country: snippet.country,
-    thumbnails: snippet.thumbnails,
+    channelId,
+    title,
+    description,
+    customURL,
+    pubDate,
+    country,
+    thumbnails,
     statistics: parseAllInts(statistics),
     uploadsPlaylistId: contentDetails.relatedPlaylists.uploads
   };
 }
 
+// Get update details from a list of channels
 export async function updateChannelInfo(channels) {
   console.log(`Loaded ${channels.length} channels for info update`);
 
@@ -61,12 +70,12 @@ export async function updateChannelInfo(channels) {
     try {
       response = await Channel.bulkWrite(
         response.map((channel) => {
-          const data = extractChannelData(channel);
+          const channelDetails = extractChannelData(channel);
 
           return {
             updateOne: {
-              filter: { _id: data.channelId },
-              update: data,
+              filter: { channelId: channelDetails.channelId },
+              update: channelDetails,
               upsert: true
             }
           };
@@ -76,91 +85,28 @@ export async function updateChannelInfo(channels) {
       throw new APIError(500, `Couldn't update channel data to database (${err.message})`);
     }
 
-    console.log(
-      `Saving channel updates to database (${response.nModified} modified, ${response.upsertedCount} added)`
-    );
+    console.log(`Saving channel updates to database (${response.nModified} modified)`);
 
     return response;
   }
   throw new APIError(400, 'YouTube API returned no channel info');
 }
 
-export async function getChannelsFromGoogleSheet() {
-  let channels;
-
-  try {
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID);
-    doc.useApiKey(process.env.GOOGLE_API_KEY);
-    await doc.loadInfo();
-
-    const sheet = doc.sheetsByIndex[0]; // or use doc.sheetsById[id]
-    channels = await sheet.getRows();
-  } catch (err) {
-    throw new APIError(500, `Couldn't access Google Sheet to import channels (${err.message})`);
-  }
-
-  // Rename the id column, so we can use this array elsewhere
-  channels = channels.map((channel) => {
-    const { id: _id, ...data } = channel;
-
-    // Remove blank fields from the spreadsheet
-    Object.keys(data).forEach((key) => {
-      if (!data[key]) delete data[key];
-    });
-
-    return { _id, channelId: _id, ...data };
-  });
-
-  console.log(`Found ${channels.length} channels in Google sheet`);
-
-  return channels;
+// Wrapper function to... get channels!
+export async function getChannels() {
+  return Channel.find({}).exec();
 }
 
-export async function saveChannels(channels) {
-  try {
-    const response = await Channel.bulkWrite(
-      channels.map((channel) => ({
-        updateOne: {
-          filter: { _id: channel._id },
-          update: channel,
-          upsert: true
-        }
-      }))
-    );
-
-    console.log(`Saving new channels to database (${response.upsertedCount} added)`);
-  } catch (err) {
-    throw new APIError(500, `Couldn't write new channel data to the database (${err.message})`);
-  }
-}
-
-export async function getChannels({ skipUpdate } = {}) {
-  let channels = await Channel.find({}).exec();
-
-  if (!channels.length) {
-    console.log('No channels in the database. Seeding from Google sheet');
-    channels = await getChannelsFromGoogleSheet();
-    await saveChannels(channels);
-    if (!skipUpdate) {
-      await updateChannelInfo(channels);
-    }
-
-    channels = await Channel.find({}).exec();
-  }
-
-  return channels;
-}
-
-function extractVideoDataRSS(video, channelId) {
+// Get the video data we care about from the RSS feed data
+function extractVideoDataRSS({ videoId, channelId, pubDate, media }) {
   return {
-    videoId: video._id,
+    videoId,
     channelId,
-    pubDate: video.pubDate,
 
-    title: video.media['media:title'][0],
-    link: buildYouTubeVideoLink(video._id),
-    description: video.media['media:description'][0],
-    channelTitle: video.author
+    pubDate: new Date(pubDate),
+    title: media['media:title'][0],
+    link: buildYouTubeVideoLink(videoId),
+    description: media['media:description'][0]
   };
 }
 
@@ -168,10 +114,11 @@ function extractVideoDataRSS(video, channelId) {
 export async function getLatestVideosFromRSS(channels) {
   console.log(`Looking for recent uploads via RSS feeds for ${channels.length} channels`);
 
+  // Loop through all the channels and create a single, flattened list of recent videos
   const videos = (
     await Promise.all(
       channels.map(async (channel) => {
-        let feed = [];
+        let feed;
         const { uploadsPlaylistId, matchingPlaylists } = channel;
 
         debug(`Getting updates via RSS for ${channel.title}`);
@@ -179,6 +126,7 @@ export async function getLatestVideosFromRSS(channels) {
         try {
           feed = [];
           if (matchingPlaylists?.length) {
+            // For channels with playlists, grab potentially multiple feed's worth of data and flatten
             feed = (
               await Promise.all(
                 matchingPlaylists.map(async (playlist) => parser.parseURL(buildFeedUrl(playlist)))
@@ -187,6 +135,7 @@ export async function getLatestVideosFromRSS(channels) {
               .map((el) => el.items)
               .flat();
           } else if (uploadsPlaylistId) {
+            // ...otherwise, use the default uploads playlist
             feed = (await parser.parseURL(buildFeedUrl(uploadsPlaylistId))).items;
           } else {
             debug(`Skipping channel ID ${channel.channelId}, no playlists defined`);
@@ -195,7 +144,8 @@ export async function getLatestVideosFromRSS(channels) {
           console.warn(`Couldn't get channel uploads via RSS for ${channel.name} (${err.message})`);
         }
 
-        return feed.map((video) => extractVideoDataRSS(video, channel.channelId));
+        // Filter channel data and add author references
+        return feed.map((video) => ({ ...extractVideoDataRSS(video), author: channel._id }));
       })
     )
   ).flat();
@@ -205,26 +155,35 @@ export async function getLatestVideosFromRSS(channels) {
   return videos;
 }
 
+// Get the video data we care about from the API data
 function extractVideoDataAPI({ snippet }) {
-  return {
-    videoId: snippet.resourceId.videoId,
-    channelId: snippet.channelId,
-    pubDate: snippet.publishedAt,
+  const {
+    resourceId: { videoId },
+    channelId,
+    publishedAt: pubDate,
+    title,
+    description
+  } = snippet;
 
-    title: snippet.title,
-    link: buildYouTubeVideoLink(snippet.resourceId.videoId),
-    description: snippet.description,
-    channelTitle: snippet.channelTitle
+  return {
+    videoId,
+    channelId,
+    pubDate,
+
+    title,
+    link: buildYouTubeVideoLink(videoId),
+    description
   };
 }
 
 // Grab recent videos via the API feed
-export async function getLatestVideosFromAPI(channels, maxResults = 20) {
+export async function getLatestVideosFromAPI({ channels, maxResults = 20 }) {
   console.log(`Looking for recent uploads via API for ${channels.length} channels`);
 
   const playlistIds = channels
-    // TODO: does this work for empty matchingPlaylists array?
-    .map((channel) => channel.matchingPlaylists || channel.uploadsPlaylistId)
+    .map(({ matchingPlaylists, uploadsPlaylistId }) =>
+      matchingPlaylists?.length ? matchingPlaylists : uploadsPlaylistId
+    )
     .flat();
 
   // https://developers.google.com/youtube/v3/docs/playlistItems/list
@@ -235,13 +194,19 @@ export async function getLatestVideosFromAPI(channels, maxResults = 20) {
     maxResults
   });
 
-  console.log(`Found ${response.length} videos via API`);
-
-  return response.map(extractVideoDataAPI);
+  // Filter channel data and add author references
+  return response.map((video) => {
+    return {
+      ...extractVideoDataAPI(video),
+      author: channels.find((channel) => channel.channelId === video.snippet.channelId)._id
+    };
+  });
 }
 
-export async function updateVideoIds(ids, { details }) {
-  console.log(`Updating ${ids.length} videos (${details ? 'with' : 'without'} details)`);
+// Update the stats and contentDetails for a list of videos
+// TODO: Eventually call periodically, right now it's only done when a video is added
+export async function updateVideos({ videos, details }) {
+  console.log(`Updating ${videos.length} videos (${details ? 'with' : 'without'} details)`);
 
   // contentDetails like the duration are static and only to be updated once
   const part = `statistics,id${details ? ',contentDetails' : ''}`;
@@ -250,17 +215,17 @@ export async function updateVideoIds(ids, { details }) {
   const response = await batchYouTubeRequest({
     endpoint: 'videos.list',
     part,
-    ids
+    ids: videos.map((video) => video.videoId)
   });
 
   try {
     await Video.bulkWrite(
-      response.map((video) => ({
+      response.map(({ id: videoId, statistics, contentDetails }) => ({
         updateOne: {
-          filter: { _id: video.id },
+          filter: { videoId },
           update: {
-            statistics: parseAllInts(video.statistics),
-            contentDetails: video.contentDetails
+            statistics: parseAllInts(statistics),
+            contentDetails
           },
           upsert: true
         }
@@ -271,6 +236,27 @@ export async function updateVideoIds(ids, { details }) {
   }
 }
 
+// Helper for saveVideos to save all the new videos to a channel's videos array
+async function addVideosToChannelVideos(videos) {
+  // Add the new videos to the Channel videos array
+  return Channel.bulkWrite(
+    Object.entries(groupBy(videos, 'channelId')).map(([channelId, channelVideos]) => ({
+      updateOne: {
+        filter: { channelId },
+        update: {
+          $addToSet: {
+            videos: {
+              $each: channelVideos.map((video) => video._id)
+            }
+          }
+        },
+        upsert: true
+      }
+    }))
+  );
+}
+
+// Save potentially new videos that were just found in a scan for updates
 export async function saveVideos(videos) {
   let response;
 
@@ -278,7 +264,7 @@ export async function saveVideos(videos) {
     response = await Video.bulkWrite(
       videos.map((video) => ({
         updateOne: {
-          filter: { _id: video.videoId },
+          filter: { videoId: video.videoId },
           update: video,
           upsert: true
         }
@@ -288,16 +274,25 @@ export async function saveVideos(videos) {
     throw new APIError(500, `Couldn't save videos to database (${err.message})`);
   }
 
-  console.log(`${pluralize('new video', response.upsertedCount, true)} added`);
+  const { upsertedCount, upsertedIds } = response;
+  console.log(`${pluralize('new video', upsertedCount, true)} added`);
 
-  if (response.nUpserted) {
-    await updateVideoIds(Object.values(response.upsertedIds), { details: true });
+  // Grab full details for new videos and add them to the channel's videos array
+  if (upsertedCount) {
+    const newVideos = Object.keys(upsertedIds).map((index) => ({
+      _id: upsertedIds[index]._id,
+      ...videos[index]
+    }));
+
+    await updateVideos({ videos: newVideos, details: true });
+    await addVideosToChannelVideos(newVideos);
   }
 
   return response;
 }
 
-async function addChannelByChannelId(channelId, playlistId = null) {
+// Actually add a channel once its ID has been determined
+async function addChannelByChannelId({ channelId, playlistId }) {
   let response;
 
   // Get the full channel data from the YouTube API
@@ -312,27 +307,31 @@ async function addChannelByChannelId(channelId, playlistId = null) {
     const { title } = channel;
 
     try {
-      // TODO: This would reset the shortTitle if you added a channel again, wouldn't it?
-      const update = { _id: channelId, shortTitle: channel.title, ...channel };
-      if (playlistId) {
-        update.$addToSet = { matchingPlaylists: playlistId };
-        channel.matchingPlaylists = [playlistId];
-      }
+      // FIXME: Avoid resetting shortTitle if channel was added twice
+      channel.shortTitle = title;
+      if (playlistId) channel.$addToSet = { matchingPlaylists: playlistId };
 
-      response = await Channel.updateOne({ channelId }, update, { upsert: true });
+      // TODO: If we use findOneAndUpdate here, this sets the createdAt field
+      response = await Channel.updateOne({ channelId }, channel, { upsert: true });
     } catch (err) {
       throw new APIError(500, `Couldn't save new channel to database (${err.message})`);
     }
 
+    // If this is a new channel, get the latest videos via the API
     if (response.upserted) {
-      const videos = await getLatestVideosFromAPI([channel], 50);
-      const { nUpserted } = await saveVideos(videos);
+      // Fetch channel again from DB, so we have a channel model for the author
+      const videos = await getLatestVideosFromAPI({
+        channels: await Channel.find({ channelId: channel.channelId }),
+        maxResults: 50
+      });
+      const { upsertedCount } = await saveVideos(videos);
 
       let status = `YouTube channel ${title} added and ${pluralize(
         'video',
-        nUpserted,
+        upsertedCount,
         true
       )} imported`;
+      // Long channel names don't look great in a video card
       if (title?.length > 30) {
         status += ', consider shortening long channel name';
       }
@@ -345,6 +344,7 @@ async function addChannelByChannelId(channelId, playlistId = null) {
   throw new APIError(400, `YouTube API returned no channel info for ${channelId}`);
 }
 
+// Process and incoming admin action request to add a new channel
 export async function addNewChannel({ videoId, channelId, playlistId }) {
   if (videoId) {
     // Look up a video's channel first
@@ -355,11 +355,11 @@ export async function addNewChannel({ videoId, channelId, playlistId }) {
     });
 
     if (video) {
-      return addChannelByChannelId(video.snippet.channelId);
+      return addChannelByChannelId({ channelId: video.snippet.channelId });
     }
     throw new APIError(400, `YouTube API returned no video info for ${videoId}`);
   } else if (channelId) {
-    return addChannelByChannelId(channelId);
+    return addChannelByChannelId({ channelId });
   } else if (playlistId) {
     const [video] = await batchYouTubeRequest({
       endpoint: 'playlistItems.list',
@@ -369,7 +369,7 @@ export async function addNewChannel({ videoId, channelId, playlistId }) {
     });
 
     if (video) {
-      return addChannelByChannelId(video.snippet.channelId, playlistId);
+      return addChannelByChannelId({ channelId: video.snippet.channelId, playlistId });
     }
 
     throw new APIError(400, 'Unable to identify channel for this playlist');
@@ -378,11 +378,19 @@ export async function addNewChannel({ videoId, channelId, playlistId }) {
   }
 }
 
+// Delete a single video via an admin action
 export async function deleteVideoById(videoId) {
   try {
     const results = await Video.updateOne({ videoId }, { $set: { isDeleted: true } });
 
     if (results?.nModified) {
+      // Also remove it from the videos array
+      const video = await Video.findOne({ videoId });
+      // TODO: Can I do this in middleware?
+      if (video) {
+        await Channel.updateOne({ _id: video.author }, { $pull: { videos: video._id } });
+      }
+
       return `Video deleted`;
     }
     if (results?.n) {
@@ -394,22 +402,22 @@ export async function deleteVideoById(videoId) {
   }
 }
 
-// wrapper function for a GET API endpoint for channels, videos that handles search
-export async function searchModelAPI(model, params) {
+// Wrapper function for a GET API endpoint for channels, videos that handles search
+export async function searchModelAPI({ model, event: { queryStringParameters } }) {
   let response = {};
 
   try {
     await dbConnect();
 
-    // querystring needs to be converted into a format that api-query-params can handle
-    const queryString = params
-      ? Object.entries(params)
+    // Querystring needs to be converted into a format that api-query-params can handle
+    const queryStringData = queryStringParameters
+      ? Object.entries(queryStringParameters)
           .map(([param, value]) => {
             return `${encodeURIComponent(param)}${value && `=${encodeURIComponent(value)}`}`;
           })
           .join('&')
       : {};
-    let { filter, skip, limit = 10, sort, projection, population } = aqp(queryString);
+    let { filter, skip, limit = 10, sort, projection, population } = aqp(queryStringData);
 
     // sensible defaults
     if (limit > MAX_YOUTUBE_API_SEARCH_LIMIT) {
@@ -454,12 +462,14 @@ export async function searchModelAPI(model, params) {
   }
 }
 
-export async function bookmarkletAction(event, validateData, callback) {
+// Wrapper to execute a bookmarklet admin action callback after validation has been performed
+export async function adminAction({ event, validate, action }) {
   try {
     await dbConnect();
 
     const { url, secret } = JSON.parse(event.body);
 
+    // First pass some basic common tests
     if (secret !== process.env.ADD_URL_SECRET) throw new APIError(401, 'Unauthorized access');
     if (!url) throw new APIError(400, 'Missing URL');
 
@@ -469,8 +479,8 @@ export async function bookmarkletAction(event, validateData, callback) {
     if (!urlData.hostname.match(/youtube.com$/))
       throw new APIError(400, 'No valid YouTube URL detected');
 
-    const bookmarkletData = validateData(urlData);
-    return buildHttpResponse({ status: await callback(bookmarkletData) });
+    // If it looks good so far, the validate function does action specific checks
+    return buildHttpResponse({ status: await action(validate(urlData)) });
   } catch (err) {
     return buildHttpError(err);
   }

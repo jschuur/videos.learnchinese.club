@@ -1,26 +1,26 @@
 import { APIError } from '/util';
-import { addNewChannel, bookmarkletAction, searchModelAPI } from '/lib';
+import { addNewChannel, adminAction, searchModelAPI } from '/lib';
 
 import { Channel } from '/models';
 
 export async function getChannels(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  return searchModelAPI(Channel, event.queryStringParameters);
+  return searchModelAPI({ event, model: Channel });
 }
 
-function validateBookmarkletData(urlData) {
+function getAddChannelInfo({ pathname, query: { v, list } }) {
   let videoId, playlistId, channelId;
 
   // eslint-disable-next-line no-useless-escape
-  const match = urlData.pathname.match(/\/channel\/([^\/]*)/);
+  const match = pathname.match(/\/channel\/([^\/]*)/);
 
   if (match?.[1]) {
     [, channelId] = match;
-  } else if (urlData.pathname === '/watch') {
-    videoId = urlData.query.v;
-  } else if (urlData.pathname === '/playlist') {
-    playlistId = urlData.query.list;
+  } else if (pathname === '/watch') {
+    videoId = v;
+  } else if (pathname === '/playlist') {
+    playlistId = list;
   } else {
     throw new APIError(400, `Can't identify channel from current page`);
   }
@@ -31,5 +31,5 @@ function validateBookmarkletData(urlData) {
 export async function addChannel(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  return bookmarkletAction(event, validateBookmarkletData, addNewChannel);
+  return adminAction({ event, validate: getAddChannelInfo, action: addNewChannel });
 }
