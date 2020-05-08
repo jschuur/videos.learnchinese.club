@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Serverless Offline",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/.bin/sls",
+      "args": ["offline", "start"]
+    },
+    {
+      "name": "Update Videos",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/.bin/sls",
+      "args": ["invoke", "local", "-f", "update_videos"],
+      "autoAttachChildProcesses": true
+    },
+    {
+      "name": "Update Channels",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/.bin/sls",
+      "args": ["invoke", "local", "-f", "update_channels"],
+      "autoAttachChildProcesses": true
+    }
+  ]
+}

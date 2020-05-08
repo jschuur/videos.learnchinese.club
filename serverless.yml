@@ -17,8 +17,8 @@ package:
 
 custom:
   stage: ${opt:stage, self:provider.stage}
-  serverless-offline:
-    useChildProcesses: true
+  # serverless-offline:
+  #   useChildProcesses: true
   domains:
     prod: api.learnchinese.club
     dev: api-dev.learnchinese.club
