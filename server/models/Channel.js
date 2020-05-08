@@ -23,8 +23,7 @@ export default mongoose.model(
       instagram: String
     },
     {
-      versionKey: false,
-      timestamps: true
+      versionKey: false
     }
   )
 );

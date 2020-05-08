@@ -19,8 +19,7 @@ export default mongoose.model(
       isDeleted: Boolean
     },
     {
-      versionKey: false,
-      timestamps: true
+      versionKey: false
     }
   )
 );
