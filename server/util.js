@@ -135,3 +135,20 @@ export function parseAllInts(data) {
 
   return data;
 }
+
+// for updateVideos() to format the potential liveStreamingDetails data
+export function parseLiveStreamingDetails({
+  scheduledStartTime,
+  actualStartTime,
+  actualEndTime,
+  concurrentViewers,
+  activeLiveChatId
+}) {
+  return {
+    ...(scheduledStartTime ? { scheduledStartTime: new Date(scheduledStartTime) } : {}),
+    ...(actualStartTime ? { actualStartTime: new Date(actualStartTime) } : {}),
+    ...(actualEndTime ? { actualEndTime: new Date(actualEndTime) } : {}),
+    ...(concurrentViewers ? { concurrentViewers: parseInt(concurrentViewers, 10) } : {}),
+    ...(activeLiveChatId ? { activeLiveChatId } : {})
+  };
+}

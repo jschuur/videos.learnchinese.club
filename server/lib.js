@@ -15,7 +15,8 @@ import {
   buildHttpError,
   APIError,
   debug,
-  parseAllInts
+  parseAllInts,
+  parseLiveStreamingDetails
 } from '/util';
 
 import { MAX_YOUTUBE_API_SEARCH_LIMIT } from '/config';
@@ -203,13 +204,13 @@ export async function getLatestVideosFromAPI({ channels, maxResults = 20 }) {
   });
 }
 
-// Update the stats and contentDetails for a list of videos
+// Get data you can only get from the API for a list of videos
 // TODO: Eventually call periodically, right now it's only done when a video is added
 export async function updateVideos({ videos, details }) {
   console.log(`Updating ${videos.length} videos (${details ? 'with' : 'without'} details)`);
 
   // contentDetails like the duration are static and only to be updated once
-  const part = `statistics,id${details ? ',contentDetails' : ''}`;
+  const part = `statistics,snippet,id${details ? ',contentDetails,liveStreamingDetails' : ''}`;
 
   // https://developers.google.com/youtube/v3/docs/videos/list
   const response = await batchYouTubeRequest({
@@ -218,15 +219,47 @@ export async function updateVideos({ videos, details }) {
     ids: videos.map((video) => video.videoId)
   });
 
+  // Generate the bulkWrite update data for all the responses
+  const videoUpdates = response.reduce(
+    (
+      acc,
+      {
+        id: videoId,
+        statistics,
+        contentDetails,
+        liveStreamingDetails,
+        snippet: { liveBroadcastContent: liveState }
+      }
+    ) => ({
+      ...acc,
+      [videoId]: {
+        statistics: parseAllInts(statistics),
+        contentDetails,
+        youtubeState: liveState === 'upcoming' || liveState === 'live' ? 'upcoming' : 'active',
+        ...(liveStreamingDetails
+          ? { liveStreamingDetails: parseLiveStreamingDetails(liveStreamingDetails) }
+          : {})
+      }
+    }),
+    {}
+  );
+
+  // Identify any deleted videos based on not getting API data back
+  videos.forEach(({ videoId }) => {
+    if (!videoUpdates[videoId]) {
+      videoUpdates[videoId] = {
+        isDeleted: true,
+        youtubeState: 'unavailable'
+      };
+    }
+  });
+
   try {
     await Video.bulkWrite(
-      response.map(({ id: videoId, statistics, contentDetails }) => ({
+      Object.entries(videoUpdates).map(([videoId, update]) => ({
         updateOne: {
           filter: { videoId },
-          update: {
-            statistics: parseAllInts(statistics),
-            contentDetails
-          },
+          update,
           upsert: true
         }
       }))
