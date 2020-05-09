@@ -12,5 +12,4 @@ test.js
 site/.netlify
 backups
 .netlify
-channels.json
-videos.json
+*.archive

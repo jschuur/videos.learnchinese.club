@@ -1,0 +1,25 @@
+name: Backup MongoDB
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  AWS_BACKUP_DESTINATION: ${{ secrets.AWS_BACKUP_DESTINATION }}
+  MONGODB_URL_BACKUP: ${{ secrets.MONGODB_URL_BACKUP }}
+
+jobs:
+  backup_mongo_db:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Dump MongoDB database
+        run: mongodump --uri=$MONGODB_URL_BACKUP --gzip --archive=learnchineseclub_prod_`date +%Y-%m-%d-%H%M%S`.archive
+
+      - name: Back DB archive up to S3
+        uses: ItsKarma/aws-cli@v1.70.0
+        with:
+          args: s3 cp . ${AWS_BACKUP_DESTINATION} --recursive --exclude "*" --include "*.archive"

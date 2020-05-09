@@ -42,7 +42,10 @@ if $no_args; then
 fi
 
 if [ -n "$ARG_EXPORT" ] ; then
-  export $(cat .env.$ENV | xargs)
+  # Don't bother looking for an environment file in GitHub Actions
+  if [ -e ".env.$ENV" ] ; then
+    export $(cat .env.$ENV | xargs)
+  fi
 
   if [ -n "$ARG_CHANNELS" ] ; then
     echo 'Exporting production channels collection'
@@ -59,7 +62,9 @@ if [ -n "$ARG_IMPORT" ] ; then
   if [ $ENV = 'development' ] ; then
     echo 'Skipping import, since using development environment for export too'
   else
-    export $(cat .env.development | xargs)
+    if [ -e .env.development ] ; then
+      export $(cat .env.development | xargs)
+    fi
 
     if [ -n "$ARG_CHANNELS" ] ; then
       echo 'Importing channels collection to local database'
@@ -77,12 +82,10 @@ if [ -n "$ARG_BACKUP" ] ; then
 
   if [ -n "$AWS_BACKUP_DESTINATION" ] ; then
     if [ -e $CHANNELS_JSON ] && [ -n "$ARG_CHANNELS" ] ; then
-      # cp $CHANNELS_JSON $BACKUP_FOLDER/channels_`date +%Y-%m-%d-%H%M%S`.json
       aws s3 cp $CHANNELS_JSON $AWS_BACKUP_DESTINATION
     fi
 
     if [ -e $VIDEOS_JSON ] && [ -n "$ARG_VIDEOS" ] ; then
-      # cp $VIDEOS_JSON $BACKUP_FOLDER/videos_`date +%Y-%m-%d-%H%M%S`.json
       aws s3 cp $VIDEOS_JSON $AWS_BACKUP_DESTINATION
     fi
   else
