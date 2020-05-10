@@ -1,2 +1,3 @@
 export const MAX_YOUTUBE_API_SEARCH_LIMIT = 100;
 export const MAX_YOUTUBE_BATCH_SIZE = 50;
+export const RECENT_VIDEOS_CHECK_ON_UPDATE = 50;

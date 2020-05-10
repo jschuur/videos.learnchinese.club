@@ -16,10 +16,12 @@ import {
   APIError,
   debug,
   parseAllInts,
-  parseLiveStreamingDetails
+  parseLiveStreamingDetails,
+  getYouTubeState,
+  mapByProperty
 } from '/util';
 
-import { MAX_YOUTUBE_API_SEARCH_LIMIT } from '/config';
+import { MAX_YOUTUBE_API_SEARCH_LIMIT, RECENT_VIDEOS_CHECK_ON_UPDATE } from '/config';
 
 // Remap some fields when importing from YouTube RSS feeds
 const parser = new Parser({
@@ -216,47 +218,36 @@ export async function updateVideos({ videos, details }) {
   const response = await batchYouTubeRequest({
     endpoint: 'videos.list',
     part,
-    ids: videos.map((video) => video.videoId)
+    ids: videos.map(({ videoId }) => videoId)
   });
 
+  const videoData = mapByProperty({ data: response, key: 'videoId', copy: [['id', 'videoId']] });
+
   // Generate the bulkWrite update data for all the responses
-  const videoUpdates = response.reduce(
-    (
-      acc,
-      {
-        id: videoId,
-        statistics,
-        contentDetails,
-        liveStreamingDetails,
-        snippet: { liveBroadcastContent: liveState }
-      }
-    ) => ({
-      ...acc,
-      [videoId]: {
+  const videoUpdates = videos.map(({ videoId }) => {
+    if (videoData[videoId]) {
+      const { statistics, contentDetails, liveStreamingDetails, snippet } = videoData[videoId];
+
+      return {
+        videoId,
         statistics: parseAllInts(statistics),
         contentDetails,
-        youtubeState: liveState === 'upcoming' || liveState === 'live' ? 'upcoming' : 'active',
+        youtubeState: getYouTubeState(snippet.liveBroadcastContent),
         ...(liveStreamingDetails
-          ? { liveStreamingDetails: parseLiveStreamingDetails(liveStreamingDetails) }
+          ? {
+              liveStreamingDetails: parseLiveStreamingDetails(liveStreamingDetails)
+            }
           : {})
-      }
-    }),
-    {}
-  );
-
-  // Identify any deleted videos based on not getting API data back
-  videos.forEach(({ videoId }) => {
-    if (!videoUpdates[videoId]) {
-      videoUpdates[videoId] = {
-        isDeleted: true,
-        youtubeState: 'unavailable'
       };
     }
+
+    // Deleted videos don't turn up in the API response, so are set to 'unavailable'
+    return { videoId, youTubeState: 'unavailable' };
   });
 
   try {
     await Video.bulkWrite(
-      Object.entries(videoUpdates).map(([videoId, update]) => ({
+      videoUpdates.map(({ videoId, ...update }) => ({
         updateOne: {
           filter: { videoId },
           update,
@@ -433,6 +424,44 @@ export async function deleteVideoById(videoId) {
   } catch (err) {
     throw new APIError(err.statusCode || 500, `Couldn't delete video ${videoId} (${err.message})`);
   }
+}
+
+// Looks if recent videos have been deleted or gone live
+export async function checkVideoStateUpdates() {
+  // Get recent videos
+  const recentVideos = await Video.find(
+    { isDeleted: { $ne: true } },
+    { videoId: 1, youtubeState: 1 },
+    {
+      sort: { pubDate: -1 },
+      limit: RECENT_VIDEOS_CHECK_ON_UPDATE
+    }
+  );
+
+  // Grab latest state of recent videos
+  // https://developers.google.com/youtube/v3/docs/videos/list
+  const response = await batchYouTubeRequest({
+    endpoint: 'videos.list',
+    part: 'snippet',
+    ids: recentVideos.map(({ videoId }) => videoId)
+  });
+
+  // Lookup table for video data by videoId
+  const videoData = mapByProperty({ data: response, key: 'videoId', copy: [['id', 'videoId']] });
+
+  // Check for youtubeState changes (premiers) or deleted videos
+  return Promise.all(
+    recentVideos.map(async (video) => {
+      const { videoId } = video;
+
+      // No data back means it's private/deleted, otherwise store latest premier state
+      video.youtubeState = videoData[videoId]
+        ? getYouTubeState(videoData[videoId]?.snippet?.liveBroadcastContent)
+        : 'unavailable';
+
+      return video.isModified() ? video.save() : null;
+    })
+  );
 }
 
 // Wrapper function for a GET API endpoint for channels, videos that handles search

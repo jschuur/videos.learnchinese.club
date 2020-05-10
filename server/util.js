@@ -152,3 +152,23 @@ export function parseLiveStreamingDetails({
     ...(activeLiveChatId ? { activeLiveChatId } : {})
   };
 }
+
+// Maps YouTube's state into our internal one
+// TODO: This doesn't (can't without other data) get unlisted videos
+export function getYouTubeState(liveBroadcastContent) {
+  return liveBroadcastContent === 'none' ? 'active' : liveBroadcastContent;
+}
+
+// Turn an array into an lookup object by a specific property
+export function mapByProperty({ data, key, copy = [] }) {
+  return data.reduce((acc, item) => {
+    copy.forEach(([fromField, toField]) => {
+      item[toField] = item[fromField];
+    });
+
+    return {
+      ...acc,
+      [item[key]]: item
+    };
+  }, {});
+}

@@ -1,7 +1,14 @@
 import mongoose from 'mongoose';
 
 import dbConnect from '/db';
-import { getChannels, getLatestVideosFromRSS, saveVideos, updateChannelInfo } from '/lib';
+import {
+  getChannels,
+  getLatestVideosFromRSS,
+  saveVideos,
+  updateChannelInfo,
+  checkVideoStateUpdates
+} from '/lib';
+
 import { buildHttpResponse, buildHttpError, APIError } from '/util';
 
 export async function updateVideos(event, context) {
@@ -15,10 +22,11 @@ export async function updateVideos(event, context) {
     channels = await getChannels();
     videos = await getLatestVideosFromRSS(channels);
     const { upsertedCount } = await saveVideos(videos);
+    await checkVideoStateUpdates();
 
     response = buildHttpResponse({
-      channels: channels.length,
-      new_videos: upsertedCount
+      channelCount: channels.length,
+      newVideosCount: upsertedCount
     });
   } catch (err) {
     response = buildHttpError(err);
