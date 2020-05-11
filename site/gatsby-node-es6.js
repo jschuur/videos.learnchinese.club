@@ -22,7 +22,7 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
     `
       query VideoArchiveQuery {
         videos: allMongodbLearnchineseclubVideos(
-          filter: { isDeleted: { ne: true } }
+          filter: { isDeleted: { ne: true }, youTubeState: { eq: "active" } }
           sort: { fields: [pubDate], order: DESC }
         ) {
           nodes {

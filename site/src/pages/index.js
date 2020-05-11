@@ -27,7 +27,7 @@ export default ({ data }) => {
 export const query = graphql`
   query RecentVideosQuery {
     videos: allMongodbLearnchineseclubVideos(
-      filter: { isDeleted: { ne: true } }
+      filter: { isDeleted: { ne: true }, youTubeState: { eq: "active" } }
       limit: 30
       sort: { fields: [pubDate], order: DESC }
     ) {

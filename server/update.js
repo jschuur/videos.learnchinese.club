@@ -254,5 +254,7 @@ export async function checkVideoStateUpdates() {
     if (video.isModified()) promises.push(video.save());
   });
 
+  console.log(`Identified ${pluralize('video state change', promises.length, true)}`);
+
   return Promise.all(promises);
 }

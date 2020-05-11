@@ -12,7 +12,9 @@ const Footer = styled.footer`
 export default () => {
   const data = useStaticQuery(graphql`
     {
-      videos: allMongodbLearnchineseclubVideos {
+      videos: allMongodbLearnchineseclubVideos(
+        filter: { youTubeState: { eq: "active" }, isDeleted: { ne: true } }
+      ) {
         totalCount
       }
 
