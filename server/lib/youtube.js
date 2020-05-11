@@ -1,45 +1,17 @@
 import { google } from 'googleapis';
 import chunks from 'lodash.chunk';
-import chalk from 'chalk';
+
+import { APIError, debug } from '/lib/util';
 
 import { MAX_YOUTUBE_BATCH_SIZE } from '/config';
-
-// Get new videos
-// playlistItems.list / playlistId / one at a time / part: snippet
-
-// Get video length
-// videos.list / id / batchable / part: contentDetails
-
-// Find deleted videos
-// videos.list / id / batchable / part: id
-
-// Get channel info
-// channels.list / id / batchable / part: snippet, contendDetails, statistics
-
-// Update video view/rating, duration
-// videos.list / id / batchable / part: statistics
 
 const youtube = google.youtube({
   version: 'v3',
   auth: process.env.YOUTUBE_API_KEY
 });
-export class APIError extends Error {
-  constructor(statusCode, message) {
-    super(message);
-
-    this.statusCode = statusCode;
-  }
-}
-
-export function debug(message, data = null) {
-  if (process.env.DEBUG) {
-    console.log(`${chalk.red('DEBUG')}: ${message}`);
-    if (data) console.log(JSON.stringify(data, null, 2));
-  }
-}
 
 // Batch YouTube API requests into the appropriate # of calls based on how many IDs it takes
-export async function batchYouTubeRequest({ endpoint, ids, playlistIds, ...options }) {
+async function batchYouTubeRequest({ endpoint, ids, playlistIds, ...options }) {
   let idField = 'id';
   let batchSize = MAX_YOUTUBE_BATCH_SIZE;
   const [model, action] = endpoint.split('.');
@@ -72,6 +44,36 @@ export async function batchYouTubeRequest({ endpoint, ids, playlistIds, ...optio
   ).flat();
 }
 
+// Get info about one more more videos
+// https://developers.google.com/youtube/v3/docs/videos/list
+export async function youTubeVideosList({ part = 'snippet', ...options }) {
+  return batchYouTubeRequest({
+    endpoint: 'videos.list',
+    part,
+    ...options
+  });
+}
+
+// Get info about one more more channels
+// https://developers.google.com/youtube/v3/docs/channels/list
+export async function youTubeChannelsList({ part = 'snippet', ...options }) {
+  return batchYouTubeRequest({
+    endpoint: 'channels.list',
+    part,
+    ...options
+  });
+}
+
+// Get info about a playlist (including channel uploads)
+// https://developers.google.com/youtube/v3/docs/playlistItems/list
+export async function youTubePlaylistItems({ part = 'snippet', ...options }) {
+  return batchYouTubeRequest({
+    endpoint: 'playlistItems.list',
+    part,
+    ...options
+  });
+}
+
 export function buildYouTubeVideoLink(videoId) {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
@@ -98,44 +100,6 @@ export function getVideoThumbnail(videoId, resolution) {
 export const buildFeedUrl = (playlistId) =>
   `https://www.youtube.com/feeds/videos.xml?playlist_id=${playlistId}`;
 
-export function buildHttpResponse({ statusCode = 200, status = 'Success', ...data }) {
-  return {
-    statusCode,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': true
-    },
-    body: JSON.stringify({ status, ...data })
-  };
-}
-
-export function buildHttpError(err) {
-  let { statusCode = 500, message: status } = err;
-
-  if (statusCode === 200 && !status) status = 'Success';
-
-  console.error(`Error: ${statusCode} ${status}`);
-  return buildHttpResponse({ statusCode, status });
-}
-
-export function parseAllInts(data) {
-  Object.keys(data).forEach((key) => {
-    let value = data[key];
-
-    if (typeof value === 'object') {
-      value = parseAllInts(value);
-    }
-
-    if (typeof value === 'string' && !Number.isNaN(Number(value))) {
-      value = parseInt(value, 10);
-    }
-
-    data[key] = value;
-  });
-
-  return data;
-}
-
 // for updateVideos() to format the potential liveStreamingDetails data
 export function parseLiveStreamingDetails({
   scheduledStartTime,
@@ -159,16 +123,9 @@ export function getYouTubeState(liveBroadcastContent) {
   return liveBroadcastContent === 'none' ? 'active' : liveBroadcastContent;
 }
 
-// Turn an array into an lookup object by a specific property
-export function mapByProperty({ data, key, copy = [] }) {
-  return data.reduce((acc, item) => {
-    copy.forEach(([fromField, toField]) => {
-      item[toField] = item[fromField];
-    });
+// Get the playlists to import videos from for a channel
+export function getChannelPlaylists({ uploadsPlaylistId, matchingPlaylists }) {
+  if (matchingPlaylists?.length) return matchingPlaylists;
 
-    return {
-      ...acc,
-      [item[key]]: item
-    };
-  }, {});
+  return uploadsPlaylistId ? [uploadsPlaylistId] : [];
 }

@@ -15,11 +15,12 @@
       {
         "root": ["./server"],
         "alias": {
-          "/lib": "./server/lib",
+          "/admin": "./server/admin",
+          "/search": "./server/search",
+          "/update": "./server/update",
           "/db": "./server/db",
           "/api": "./server/api",
-          "/util": "./server/util",
-          "/models": "./server/models"
+          "/lib": "./server/lib"
         }
       }
     ]

@@ -1,7 +1,7 @@
-import dbConnect from '/db';
-import { buildHttpResponse, buildHttpError } from '/util';
+import dbConnect from '/db/db';
+import { Channel, Video } from '/db/models';
 
-import { Channel, Video } from '/models';
+import { buildHttpResponse, buildHttpError } from '/lib/util';
 
 export async function getStatus(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;

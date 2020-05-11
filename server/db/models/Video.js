@@ -16,7 +16,7 @@ export default mongoose.model(
       contentDetails: Schema.Types.Mixed,
       liveStreamingDetails: Schema.Types.Mixed,
       pubDate: Date,
-      youtubeState: String,
+      youTubeState: String,
       isDeleted: Boolean
     },
     {

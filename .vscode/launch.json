@@ -4,6 +4,32 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Test NPM script",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/nodemon",
+      "runtimeArgs": ["--nolazy", "--exec", "${workspaceFolder}/node_modules/.bin/babel-node"],
+      "program": "${workspaceFolder}/test.js",
+      "args": ["-r", "dotenv/config", "dotenv_config_path=.env.development"],
+      "restart": true,
+      "protocol": "inspector",
+      "stopOnEntry": false,
+      "sourceMaps": true,
+      "showAsyncStacks": true,
+      "console": "internalConsole",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test NPM script",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "debug:test"],
+      "port": 9229,
+      "skipFiles": ["<node_internals>/**"],
+      "autoAttachChildProcesses": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Launch Current File",
       "program": "${file}",
       "skipFiles": ["<node_internals>/**"]

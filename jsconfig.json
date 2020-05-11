@@ -2,11 +2,14 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "/lib": ["server/lib"],
+      "/lib/util": ["server/lib/util"],
+      "/lib/extract": ["server/lib/extract"],
+      "/lib/youtube": ["server/lib/youtube"],
       "/db": ["server/db"],
       "/api": ["server/api"],
-      "/util": ["server/util"],
-      "/models": ["server/models"]
+      "/search": ["server/search"],
+      "/admin": ["server/admin"],
+      "/update": ["server/update"]
     }
   }
 }

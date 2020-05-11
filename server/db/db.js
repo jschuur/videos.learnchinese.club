@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import { APIError } from '/util';
+import { APIError } from '/lib/util';
 
 let isConnected;
 
