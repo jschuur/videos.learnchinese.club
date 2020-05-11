@@ -1,8 +1,11 @@
 name: Backup MongoDB
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
+  push:
+    branches:
+      - master
+  # schedule:
+  #   - cron: '0 0 * * *'
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -16,10 +19,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Dump MongoDB database
-        run: mongodump --uri=$MONGODB_URL_BACKUP --gzip --archive=learnchineseclub_prod_`date +%Y-%m-%d-%H%M%S`.archive
-
-      - name: Back DB archive up to S3
-        uses: ItsKarma/aws-cli@v1.70.0
+      - name: Set up Node
+        uses: actions/setup-node@v1
         with:
-          args: s3 cp . ${AWS_BACKUP_DESTINATION} --recursive --exclude "*" --include "*.archive"
+          node-version: '12.x'
+
+      - name: Install dependencies
+        run: sudo apt-get install awscli
+
+      - name: Execute backup script
+        run: npm run backup:prod
