@@ -16,8 +16,6 @@ import {
   youTubePlaylistItems
 } from '/lib/youtube';
 
-import { RECENT_VIDEOS_CHECK_ON_UPDATE } from '/config';
-
 // Remap some fields when importing from YouTube RSS feeds
 const parser = new Parser({
   customFields: {
@@ -219,7 +217,7 @@ export async function saveVideos(videos) {
 }
 
 // Looks if recent videos have been deleted or gone live
-export async function checkVideoStateUpdates() {
+export async function checkVideoStateUpdates(limit) {
   const promises = [];
 
   // Get recent videos
@@ -228,7 +226,7 @@ export async function checkVideoStateUpdates() {
     { videoId: 1, youTubeState: 1 },
     {
       sort: { pubDate: -1 },
-      limit: RECENT_VIDEOS_CHECK_ON_UPDATE
+      limit
     }
   );
 

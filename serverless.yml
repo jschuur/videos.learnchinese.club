@@ -83,6 +83,12 @@ functions:
     events:
       - schedule: cron(25,55 * * * ? *)
 
+  update_videos_longtail:
+    handler: server/schedule.updateVideosLongTail
+    timeout: 30
+    events:
+      - schedule: cron(10 0 * * ? *)
+
   update_channels:
     handler: server/schedule.updateChannels
     timeout: 60

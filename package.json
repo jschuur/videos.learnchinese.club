@@ -11,6 +11,7 @@
     "deploy:site": "npm run build:site && npm run deploy --prefix site",
     "deploy:server": "serverless deploy --env production --stage prod",
     "update:videos": "serverless invoke local -f update_videos",
+    "update:videos:longtail": "serverless invoke local -f update_videos_longtail",
     "update:videos:prod": "serverless invoke local -f update_videos --env production",
     "update:videos:both": "npm run update:videos && npm run update:videos:prod",
     "update:channels": "serverless invoke local -f update_channels",
