@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 
 import { APIError } from '/lib/util';
 
+if (process.env.DEBUG) mongoose.set('debug', true);
+
 let isConnected;
 
 export default async () => {

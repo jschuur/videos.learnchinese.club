@@ -1,6 +1,7 @@
 import chalk from 'chalk';
+import moment from 'moment';
 
-import { Channel } from '/db/models';
+import { Channel, LogMessage } from '/db/models';
 
 export class APIError extends Error {
   constructor(statusCode, message) {
@@ -85,4 +86,11 @@ export function buildLookupTable({ from, by, copy = [], include = [] }) {
 // Wrapper function to... get channels!
 export async function getChannels() {
   return Channel.find({});
+}
+
+export async function logMessage({ expiresIn = null, ...logEntry }) {
+  console[logEntry.type || 'info'](logEntry.message);
+  if (expiresIn) logEntry.expiresAt = moment().add(expiresIn);
+
+  return LogMessage.create(logEntry);
 }

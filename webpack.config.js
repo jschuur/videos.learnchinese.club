@@ -1,5 +1,5 @@
 const slsw = require('serverless-webpack');
-var ContextReplacementPlugin = require('webpack/lib/ContextReplacementPlugin');
+const ContextReplacementPlugin = require('webpack/lib/ContextReplacementPlugin');
 
 module.exports = {
   target: 'node',

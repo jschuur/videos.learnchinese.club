@@ -1,9 +1,9 @@
 import { google } from 'googleapis';
 import chunks from 'lodash.chunk';
 
-import { APIError, debug } from '/lib/util';
+import { APIError, debug, logMessage } from '/lib/util';
 
-import { MAX_YOUTUBE_BATCH_SIZE } from '/config';
+import { partQuotas, MAX_YOUTUBE_BATCH_SIZE } from '/config';
 
 const youtube = google.youtube({
   version: 'v3',
@@ -24,6 +24,18 @@ async function batchYouTubeRequest({ endpoint, ids, playlistIds, ...options }) {
     idField = 'playlistId';
     ids = playlistIds;
   }
+
+  const quotaCost =
+    options.part.split(',').reduce((acc, part) => acc + partQuotas[part], 1) *
+    Math.ceil(ids.length / batchSize);
+
+  const message = `YouTube API quota used for ${endpoint}: ${quotaCost}`;
+  logMessage({
+    message,
+    scope: 'batchYouTubeRequest',
+    expiresIn: { days: 60 },
+    metaData: { endpoint, quotaCost }
+  });
 
   // Loop through each batch of updates (wrap async map in Promise.all())
   return (

@@ -6,7 +6,7 @@ import { Channel, Video } from '/db/models';
 
 import { extractChannelData } from '/lib/extract';
 import { getLatestVideosFromAPI, saveVideos } from '/update';
-import { APIError, buildHttpError, buildHttpResponse } from '/lib/util';
+import { APIError, buildHttpError, buildHttpResponse, logMessage } from '/lib/util';
 import { youTubeVideosList, youTubeChannelsList, youTubePlaylistItems } from '/lib/youtube';
 
 // Actually add a channel once its ID has been determined
@@ -21,7 +21,7 @@ export async function addChannelByChannelId({ channelId, playlistId }) {
 
   if (item) {
     const channel = extractChannelData(item);
-    const { title } = channel;
+    const { title, channelId } = channel;
 
     try {
       // FIXME: Avoid resetting shortTitle if channel was added twice
@@ -43,17 +43,23 @@ export async function addChannelByChannelId({ channelId, playlistId }) {
       const { upsertedCount } = await saveVideos(videos);
 
       // TODO: Should make it clear when only a playlist is used to add them under
-      let status = `YouTube channel ${title} added and ${pluralize(
+      let message = `YouTube channel ${title} added and ${pluralize(
         'video',
         upsertedCount,
         true
       )} imported`;
+      logMessage({
+        message,
+        scope: 'admin:addChannel',
+        metaData: { title, channelId, videosAdded: upsertedCount }
+      });
+
       // Long channel names don't look great in a video card
       if (title?.length > 30) {
-        status += ', consider shortening long channel name';
+        message += ', consider shortening long channel name';
       }
 
-      return status;
+      return message;
     }
     // TODO: Better message after adding a second playlist for a channel
     return `YouTube channel ${title} is already tracked`;
@@ -96,11 +102,18 @@ export async function deleteVideoById(videoId) {
 
     if (results?.nModified) {
       // Also remove it from the videos array
-      const video = await Video.findOne({ videoId });
+      const video = await Video.findOne({ videoId }).populate('author');
       // TODO: Can I do this in middleware?
       if (video) {
         await Channel.updateOne({ _id: video.author }, { $pull: { videos: video._id } });
       }
+
+      const { title, channelId } = video;
+      logMessage({
+        message: `Video '${title}' deleted by and admin action`,
+        scope: 'admin:deleteVideo',
+        metaData: { title, videoId, channelId, channel: video.author.shortTitle }
+      });
 
       return `Video deleted`;
     }

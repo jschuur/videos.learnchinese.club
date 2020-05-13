@@ -5,7 +5,7 @@ import groupBy from 'group-array';
 import { Channel, Video } from '/db/models';
 
 import { extractChannelData, extractVideoDataAPI, extractVideoDataRSS } from '/lib/extract';
-import { APIError, debug, buildLookupTable, parseAllInts } from '/lib/util';
+import { APIError, debug, buildLookupTable, parseAllInts, logMessage } from '/lib/util';
 import {
   buildFeedUrl,
   getChannelPlaylists,
@@ -223,7 +223,7 @@ export async function checkVideoStateUpdates(limit) {
   // Get recent videos
   const recentVideos = await Video.find(
     { isDeleted: { $ne: true } },
-    { videoId: 1, youTubeState: 1 },
+    { videoId: 1, channelId: 1, youTubeState: 1, title: 1 },
     {
       sort: { pubDate: -1 },
       limit
@@ -242,14 +242,27 @@ export async function checkVideoStateUpdates(limit) {
 
   // Check for youTubeState changes (premiers) or deleted videos
   recentVideos.forEach((video) => {
-    const { videoId } = video;
+    const { videoId, title, channelId, youTubeState } = video;
 
     // No data back means it's private/deleted, otherwise store latest premier state
     video.youTubeState = videoData[videoId]
       ? getYouTubeState(videoData[videoId]?.snippet?.liveBroadcastContent)
       : 'unavailable';
 
-    if (video.isModified()) promises.push(video.save());
+    if (video.isModified()) {
+      logMessage({
+        message: `Video '${title}' went from ${youTubeState} to ${video.youTubeState}`,
+        scope: 'update:videoStateChange',
+        metaData: {
+          videoId,
+          title,
+          channelId,
+          oldYouTubeState: youTubeState,
+          newYouTubeState: video.youTubeState
+        }
+      });
+      promises.push(video.save());
+    }
   });
 
   console.log(`Identified ${pluralize('video state change', promises.length, true)}`);
