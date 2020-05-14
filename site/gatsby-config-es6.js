@@ -35,7 +35,7 @@ module.exports = {
     title: SITE_TITLE,
     titleTemplate: `%s · ${SITE_TITLE}`,
     description: SITE_DESCRIPTION,
-    url: 'https://videos.learnchinese.club',
+    url: 'https://learnchinese.club',
     image: '/images/logo-512x512.png',
     twitterUsername: '@LearnChineseCLB',
     lastUpdate: new Date()
@@ -60,6 +60,7 @@ module.exports = {
       }
     },
     `gatsby-plugin-react-helmet`,
+    `gatsby-plugin-netlify`,
     {
       resolve: `gatsby-plugin-manifest`,
       options: {

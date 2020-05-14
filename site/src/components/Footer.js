@@ -44,10 +44,10 @@ export default () => {
         ({videoCount} videos, {channelCount} channels).
       </p>
       <p>
-        Videos are <a href="https://github.com/jschuur/videos.learnchinese.club/">updated</a> every
-        30 minutes from a curated selection of YouTube channels via the YouTube API.{' '}
-        <a href="https://github.com/jschuur/videos.learnchinese.club/labels/bug">Bugs</a> /{' '}
-        <a href="https://github.com/jschuur/videos.learnchinese.club/projects/2">Roadmap</a>.
+        Videos are <a href="https://github.com/jschuur/learnchinese.club/">updated</a> every 30
+        minutes from a curated selection of YouTube channels via the YouTube API.{' '}
+        <a href="https://github.com/jschuur/learnchinese.club/labels/bug">Bugs</a> /{' '}
+        <a href="https://github.com/jschuur/learnchinese.club/projects/2">Roadmap</a>.
       </p>
     </Footer>
   );

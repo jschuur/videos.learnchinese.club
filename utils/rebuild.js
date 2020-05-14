@@ -4,7 +4,7 @@ const axios = require('axios');
 
 dotenv.config({ path: resolve(__dirname, '../.env.development') });
 
-const DISPATCH_URL = 'https://api.github.com/repos/jschuur/videos.learnchinese.club/dispatches';
+const DISPATCH_URL = 'https://api.github.com/repos/jschuur/learnchinese.club/dispatches';
 
 console.log(`Triggering GitHub Action rebuild...`);
 
@@ -21,7 +21,7 @@ axios
   )
   .then((response) => {
     console.log(
-      `Done (${response.status}: ${response.statusText})\nCheck latest workflow: https://github.com/jschuur/videos.learnchinese.club/actions?query=workflow%3A%22Redeploy+Gatsby+site%22`
+      `Done (${response.status}: ${response.statusText})\nCheck latest workflow: https://github.com/jschuur/learnchinese.club/actions?query=workflow%3A%22Redeploy+Gatsby+site%22`
     );
   })
   .catch((err) => {

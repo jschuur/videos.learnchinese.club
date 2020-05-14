@@ -1,8 +1,8 @@
 {
-  "name": "videos.learnchinese.club",
-  "version": "0.0.5",
+  "name": "learnchinese.club",
+  "version": "0.0.6",
   "description": "Lists recent YouTube videos for Chinese language learning",
-  "homepage": "https://videos.learnchinese.club",
+  "homepage": "https://learnchinese.club",
   "scripts": {
     "dev:site": "npm run dev --prefix site",
     "dev:server": "serverless offline start --watch --printOutput",
@@ -80,9 +80,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jschuur/videos.learnchinese.club"
+    "url": "https://github.com/jschuur/learnchinese.club"
   },
   "bugs": {
-    "url": "https://github.com/jschuur/videos.learnchinese.club/issues"
+    "url": "https://github.com/jschuur/learnchinese.club/issues"
   }
 }
