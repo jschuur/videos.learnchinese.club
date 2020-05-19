@@ -8,7 +8,13 @@ import {
   updateChannelInfo,
   checkVideoStateUpdates
 } from '/update';
-import { APIError, buildHttpResponse, buildHttpError, getChannels } from '/lib/util';
+import {
+  APIError,
+  buildHttpResponse,
+  buildHttpError,
+  getChannels,
+  getActiveChannels
+} from '/lib/util';
 
 import { RECENT_VIDEOS_CHECK_ON_UPDATE, RECENT_VIDEOS_CHECK_ON_LONGTAIL } from '/config';
 
@@ -21,7 +27,7 @@ export async function updateVideos(event, context) {
   try {
     await dbConnect();
 
-    channels = await getChannels();
+    channels = await getActiveChannels();
     videos = await getLatestVideosFromRSS(channels);
     const { upsertedCount } = await saveVideos(videos);
 

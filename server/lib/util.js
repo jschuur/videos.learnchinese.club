@@ -83,9 +83,13 @@ export function buildLookupTable({ from, by, copy = [], include = [] }) {
   }, {});
 }
 
-// Wrapper function to... get channels!
+// Get all the channels, even if they're paused
 export async function getChannels() {
   return Channel.find({});
+}
+// Only get active channels that we track updates from
+export async function getActiveChannels() {
+  return Channel.find({ paused: { $ne: true } });
 }
 
 export async function logMessage({ expiresIn = null, ...logEntry }) {
