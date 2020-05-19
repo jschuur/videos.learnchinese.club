@@ -95,10 +95,7 @@ export async function addNewChannel({ videoId, channelId, playlistId }) {
 // Delete a single video via an admin action
 export async function deleteVideoById(videoId) {
   try {
-    const results = await Video.updateOne(
-      { videoId },
-      { $set: { isDeleted: true, youTubeState: 'unavailable' } }
-    );
+    const results = await Video.updateOne({ videoId }, { isDeleted: true });
 
     if (results?.nModified) {
       // Also remove it from the videos array
