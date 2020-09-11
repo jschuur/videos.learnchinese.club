@@ -41,7 +41,7 @@
     "youtube-duration-format": "^0.2.0"
   },
   "devDependencies": {
-    "netlify-cli": "^2.47.0"
+    "netlify-cli": "^2.62.0"
   },
   "repository": {
     "type": "git",
