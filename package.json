@@ -35,7 +35,7 @@
   "license": "ISC",
   "dependencies": {
     "api-query-params": "^4.15.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "chalk": "^4.0.0",
     "dotenv": "^8.2.0",
     "google-spreadsheet": "^3.0.11",
