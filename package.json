@@ -47,7 +47,7 @@
     "pluralize": "^8.0.0",
     "rss-parser": "^3.8.0",
     "saslprep": "^1.0.3",
-    "url-parse": "^1.4.7"
+    "url-parse": "^1.5.9"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
