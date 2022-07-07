@@ -42,7 +42,7 @@
     "googleapis": "^48.0.0",
     "group-array": "^1.0.0",
     "lodash.chunk": "^4.2.0",
-    "moment": "^2.25.3",
+    "moment": "^2.29.4",
     "mongoose": "^5.9.12",
     "pluralize": "^8.0.0",
     "rss-parser": "^3.8.0",
